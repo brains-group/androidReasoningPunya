@@ -1,6 +1,8 @@
 package wvw.mobile.rules.explanation;
 
 
+import android.util.Log;
+
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.InfModel;
@@ -70,7 +72,7 @@ public class Explainer {
     ///region Methods
 
     /**
-     * Generate counterfactual explaination for statement by comparing how this.baseModel reached the conclusion
+     * Generate counterfactual explanation for statement by comparing how this.baseModel reached the conclusion
      * compared to how otherBaseModel differs(or match) the conclusion by using the same ruleSet, this.rules.
      * Highlight the difference
      * @param statement the statement (conclusion) to generate explanation
@@ -145,6 +147,277 @@ public class Explainer {
         return results;
     }
 
+
+    // ==================================================================================
+    // ==========================     capuzb Contributions     ==========================
+    // ==================================================================================
+
+    /**
+     * Generate counterfactual explanation for statement by comparing how this.baseModel reached the conclusion
+     * compared to how otherBaseModel differs (or match) the conclusion by using the same ruleSet, this.rules.
+     * Highlight the difference
+     * @param statement the statement (conclusion) to generate explanation
+     * @param otherBaseModel the other baseModel to compare this.baseModel to after apply this.rule to both
+     * @return The InfModel derived from the reasoner.
+     */
+    public String GetFullCounterfactualExplanation_B(Statement statement, Model otherBaseModel){
+        InfModel thisInfModel = generateInfModel(baseModel);
+        InfModel otherInfModel = generateInfModel(otherBaseModel);
+        String results = "";
+        StmtIterator itr = thisInfModel.listStatements(statement.getSubject(), statement.getPredicate(), (RDFNode) null);
+        StmtIterator itr2 = otherInfModel.listStatements(statement.getSubject(), statement.getPredicate(), (RDFNode) null);
+
+        // Find the triples (matches) and rule that was used to assert this statement, if it exists in the infModel.
+        Iterator<Derivation> thisDerivItr = thisInfModel.getDerivation(statement);
+        Iterator<Derivation> otherDerivItr = otherInfModel.getDerivation(statement);
+
+        while (thisDerivItr.hasNext()) {
+            // This model derivation
+            RuleDerivation thisDerivation = (RuleDerivation) thisDerivItr.next();
+            RuleDerivation otherDerivation = null;
+
+            // Complete derivation match
+            if (otherDerivItr.hasNext()) {
+                otherDerivation = (RuleDerivation) otherDerivItr.next();
+            }
+            // Partial derivation match (same subject and predicate, but different object)
+            else if (itr2.hasNext()) {
+                Statement otherMatch = itr2.next();
+                otherDerivItr = otherInfModel.getDerivation(otherMatch);
+                otherDerivation = (RuleDerivation) otherDerivItr.next();
+            }
+            Triple thisConclusion = thisDerivation.getConclusion();
+            Triple otherConclusion = null;
+            if (otherDerivation != null)
+                otherConclusion = otherDerivation.getConclusion();
+
+            if (otherConclusion == null) {
+                results += "This model concluded: " + describeTriple(thisConclusion) + "\n";
+                results += "Alternate model didn't conclude anything.\n";
+                System.out.print(results);
+                return results;
+            } else if (thisConclusion.sameAs(otherConclusion.getSubject(),
+                    otherConclusion.getPredicate(),
+                    otherConclusion.getObject())) {
+                results += "Both model concluded: " + describeTriple(thisConclusion) + "\n";
+                for (Triple match : thisDerivation.getMatches()) {
+                    Statement matchStatement = generateStatement(match);
+                    results += GetFullCounterfactualExplanation_B(matchStatement, otherBaseModel) + "\n";
+                }
+            } else {
+                results += "This model concluded: " + describeTriple(thisConclusion) + " using Matches: \n";
+                for (Triple match : thisDerivation.getMatches()) {
+                    Statement matchStatement = generateStatement(match);
+                    // results +=  " Match: " + describeStatement(matchStatement) + "\n";
+                    results +=  "  " + describeStatement(matchStatement) + "\n";
+                }
+                results += "Alternate model concluded: " + describeTriple(otherConclusion) + " instead using Matches: \n";
+                for (Triple match2 : otherDerivation.getMatches()) {
+                    Statement matchStatement = generateStatement(match2);
+                    // results += " Match: " + describeStatement(matchStatement) + "\n";
+                    results += "  " + describeStatement(matchStatement) + "\n";
+                }
+                // Recurse
+                for (Triple match : thisDerivation.getMatches()) {
+                    Statement matchStatement = generateStatement(match);
+                    if (!baseModel.contains(matchStatement)) {
+                        results += GetFullCounterfactualExplanation_B(matchStatement, otherBaseModel) + "\n";
+                    }
+                }
+            }
+        }
+        return results;
+    }
+
+
+    // Helper method to describe a triple
+    private String describeTriple(Triple triple) {
+        // String subject = triple.getSubject().toString();
+        String subjectURI = triple.getSubject().getURI();
+        String[] subjectParts = subjectURI.split("/");
+        String subject = subjectParts[subjectParts.length - 1];
+
+        // String predicate = triple.getPredicate().toString();
+        String predicateURI = triple.getPredicate().getURI();
+        String[] predicateParts = predicateURI.split("/");
+        String predicate = predicateParts[predicateParts.length - 1];
+
+        String object;
+        if (triple.getObject().isLiteral()) {
+            String literalValue = triple.getObject().getLiteral().toString();
+            String[] objectParts = literalValue.split("\\^\\^");
+            // Return the first part which contains the numeric value
+            object = objectParts[0];
+        } else {
+            // object = triple.getObject().toString();
+            String objectURI = triple.getObject().getURI();
+            String[] objectParts = objectURI.split("/");
+            object = objectParts[objectParts.length - 1];
+        }
+        return "Subject: " + subject + " , Predicate: " + predicate + ", Object: " + object;
+    }
+
+
+    private String describeStatement(Statement statement) {
+        String subjectURI = statement.getSubject().getURI();
+        String[] subjectParts = subjectURI.split("/");
+        String subject = subjectParts[subjectParts.length - 1];
+
+        String predicateURI = statement.getPredicate().getURI();
+        String[] predicateParts = predicateURI.split("/");
+        String predicate = predicateParts[predicateParts.length - 1];
+
+        String object;
+        String literalValue;
+        RDFNode objectNode = statement.getObject();
+        if (objectNode.isLiteral()) {
+            literalValue = objectNode.toString();
+            String[] objectParts = literalValue.split("\\^\\^");
+            // Return the first part which contains the numeric value
+            object = objectParts[0];
+        } else if (objectNode instanceof Resource) {
+            Resource resource = (Resource) objectNode;
+            if (resource.isURIResource()) {
+                String objectURI = resource.getURI();
+                String[] objectParts = objectURI.split("/");
+                object = objectParts[objectParts.length - 1];
+            } else {
+                // Handle blank nodes or other resource types as needed
+                object = resource.toString();
+            }
+        } else {
+            // Handle other types of nodes if necessary
+            object = objectNode.toString();
+        }
+        return "Subject: " + subject + ", Predicate: " + predicate + ", Object: " + object;
+    }
+
+
+    /**
+     * Produces a single-sentence contextual explanation as to how the inputted statement
+     * was derived by a reasoner.
+     * @param subject: The statement's subject. Must be a Resource, or null as a wildcard.
+     * @param property: The statement's property. Must be a Property, or null as a wildcard.
+     * @param object: The statement's object. Can be a Literal, a Resource, or null as a wildcard
+     * @return The traced-base explanation string
+     */
+    public String GetFullTracedBaseExplanation_B(Object subject, Object property, Object object) {
+        StringBuilder explanation = new StringBuilder("");
+
+        InfModel model = generateInfModel(baseModel);
+
+        explanation.append(generateTraceBasedExplanation_B(this.baseModel, model, (Resource)subject,
+                (Property) property, (RDFNode) object));
+
+        return explanation.toString();
+    }
+
+
+    // Use the generated inf model, to provide a deep trace for a
+    // triple (subject : predicate : object). The base model (containing
+    // triples not generated by the reasoner) is needed to check whether
+    // a statement was generated by the reasoner or inputted by the user.
+    private String generateTraceBasedExplanation_B(Model baseModel, InfModel inf,
+                                                 Resource subject, Property predicate, RDFNode object) {
+        Log.d("Explanation-Runner", "\tGenerating Trace-Based Explanation...\n\t\t(" + subject + ", " + predicate + ", " + object + ")");
+
+        String answer = "";
+        StmtIterator stmtItr = inf.listStatements(subject, predicate, object);
+        while ( stmtItr.hasNext() )
+        {
+            Statement s = stmtItr.next();
+            answer += traceDerivation_B(inf, baseModel, s, 0) + "\n";
+            answer += "\n\n";
+
+        }
+        return answer;
+    }
+
+
+    // A recursive function that traces through the infModel to determine how the statement was generated
+    // by a reasoner, if at all. infModel contains the full RDF model including the triples generated by
+    // the reasoner, the baseModel just contains the triples inputted by the user. The statement is the
+    // triple that we are tracing back. Tabs specifies the formatting, and can be thought of as the "level"
+    // in our model that we're in.
+    private String traceDerivation_B(InfModel infModel, Model baseModel, Statement statement, int tabs) {
+        String results = "";
+
+        // Find the triples (matches) and rule that was used to
+        // assert this statement, if it exists in the infModel.
+        Iterator<Derivation> derivItr = infModel.getDerivation(statement);
+        while(derivItr.hasNext()) {
+
+            // Should be the same as statement.
+            // Multiple are possible if a wildcard is used within statement.
+            RuleDerivation derivation = (RuleDerivation) derivItr.next();
+
+            // The concluded triple:
+            Triple conclusion = derivation.getConclusion();
+            results += (tabOffset(tabs) + "Conclusion: " + describeTriple(conclusion) + " used the following matches: \n");
+
+            // Goes through the triples that were "matched" with the rule that was fired to
+            // generate the concluded triple.
+            for (Triple match : derivation.getMatches()) {
+
+                // Use the URIs to generate a statement, so we can search the base model for the statement.
+                Resource matchResource = ResourceFactory.createResource(match.getSubject().getURI());
+                Property matchProperty = ResourceFactory.createProperty(match.getPredicate().getURI());
+
+                Node obj = match.getObject();
+
+                if (!obj.isLiteral()) {
+                    Resource matchObject = ResourceFactory.createResource(match.getObject().getURI());
+
+                    Statement s = ResourceFactory.createStatement(matchResource, matchProperty, matchObject);
+
+                    // If the match was added by the user, we don't need to trace through how the reasoner derived
+                    // that statement, since the user added it themselves...
+                    if (baseModel.contains(s)) {
+                        results += tabOffset(tabs) + " Match: " + describeStatement(s) + "\n";
+                    }
+
+                    // Assuming it's not in the base model, then the reasoner must have derived that statement...
+                    if (!baseModel.contains(s)) {
+                        results += tabOffset(tabs) + " Match: " + describeStatement(s) + "\n";
+
+                        // Recursively trace to find how the reasoner derived that statement.
+                        results += traceDerivation_B(infModel, baseModel, s, tabs+1) + "\n";
+                    }
+                } else {
+                    Literal l = ResourceFactory.createTypedLiteral(obj.getLiteralValue().toString(), obj.getLiteralDatatype());
+                    Statement s = ResourceFactory.createStatement(matchResource, matchProperty, l);
+
+                    if (baseModel.contains(s)) {
+                        results += tabOffset(tabs) + " Match: " + describeStatement(s) + "\n";
+                    }
+
+                    // Assuming it's not in the base model, then the reasoner must have derived that statement...
+                    if (!baseModel.contains(s)) {
+                        results += tabOffset(tabs) + " Match: " + describeStatement(s) + "\n";
+
+                        // Recursively trace to find how the reasoner derived that statement.
+                        results += traceDerivation_B(infModel, baseModel, s, tabs+1) + "\n";
+                    }
+                }
+            }
+
+            // After going through the matches, we now print the rule that the matches matched to.
+            results += tabOffset(tabs) + "And paired them with the following rule: \n" ;
+            results += tabOffset(tabs) + derivation.getRule().toString() + "\n";
+            results += tabOffset(tabs) + "to reach this conclusion.\n";
+
+        }
+        return results;
+    }
+
+
+    // ==================================================================================
+    // ==========================     End of Contributions     ==========================
+    // ==================================================================================
+
+
+
+
     /**
      * Produces a single-sentence contextual explanation as to how the inputted statement
      * was derived by a reasoner.
@@ -173,9 +446,13 @@ public class Explainer {
      * @return
      */
     public String GetSimpleContextualExplanation(Object resource, Object property, Object object){
+        Log.d("Explanation-Runner", "\tGenerating Simple Contextual Explanation for (" + resource + ", " + property + ", " + object + ")");
+
         StringBuilder explanation = new StringBuilder("");
 
         InfModel model = generateInfModel(baseModel);
+        Log.d("Explanation-Runner", "\t\tGetSimpleContextualExplanation() Model:\n\t\t\t" + model);
+
         StmtIterator itr = model
                 .listStatements((Resource)resource, (Property) property, (RDFNode) object);
 
@@ -197,10 +474,13 @@ public class Explainer {
      * formatted in a contextual explanation.
      */
     public String GetShallowContextualExplanation(Object resource, Object property, Object object) {
+        Log.d("Explanation-Runner", "\tGenerating Shallow Contextual Explanation for (" + resource + ", " + property + ", " + object + ")");
+
         StringBuilder explanation = new StringBuilder("");
 
         // Get the derivations produced by the reasoner.
         InfModel model = generateInfModel(baseModel);
+        Log.d("Explanation-Runner", "\t\tGetShallowContextualExplanation() Model:\n\t\t\t" + model);
         StmtIterator itr = model
                 .listStatements((Resource)resource, (Property) property, (RDFNode) object);
 
@@ -414,6 +694,8 @@ public class Explainer {
     // a statement was generated by the reasoner or inputted by the user.
     private String generateTraceBasedExplanation(Model baseModel, InfModel inf,
                                                  Resource subject, Property predicate, RDFNode object) {
+        Log.d("Explanation-Runner", "Generating Trace-Based Explanation...\n\t(" + subject + ", " + predicate + ", " + object + ")");
+
         String answer = "";
         StmtIterator stmtItr = inf.listStatements(subject, predicate, object);
         while ( stmtItr.hasNext() )

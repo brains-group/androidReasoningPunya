@@ -27,6 +27,8 @@ public class ModelFactory {
 
     private static String foaf = "http://xmlns.com/foaf/0.1/";
     private static String personURI = foaf + "Person";
+
+    private static String nameURI = ex + "name"; // capuzb contributions
     private static String usdaURI = "http://idea.rpi.edu/heals/kb/usda-ontology#";
 
     public static String getGlobalURI() {
@@ -73,34 +75,82 @@ public class ModelFactory {
         return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, model);
     }
 
+//    public static Model getAIMEBaseModel() {
+//        // creating the model used in AIME tutorial with Person, Observe:eat usda:Apple
+//        Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
+//
+//        // create the resource
+//        Resource user = model.createResource(personURI);
+//        Resource observation = model.createResource(observationURI);
+//        Resource name = model.createResource(nameURI); // new
+//        // Apple usda food, User recorded food weight, weight unit
+//        Resource usdaFood = model.createResource("http://idea.rpi.edu/heals/kb/usda#09003"); // An Apple
+//        Literal foodWeight = model.createTypedLiteral(new BigDecimal(200)); // xsd:decimal
+//        String unitText   = "g";
+//        // add the property
+//        user.addProperty(model.createProperty(ateURI), observation);
+//        user.addProperty(model.createProperty(rdfURI + "type"), user);
+//        String brendan_name = "Brendan"; // new
+//        user.addLiteral(model.createProperty(nameURI), brendan_name); // new
+//
+//
+//        observation.addLiteral(model.createProperty(weightURI), foodWeight);
+//        observation.addProperty(model.createProperty(unitURI), unitText);
+//        observation.addProperty(model.createProperty(variableMeasuredURI), usdaFood);
+//        usdaFood.addLiteral(model.createProperty(usdaURI + "sugar"), model.createTypedLiteral(new BigDecimal(10.39)));
+//
+//        // set prefix for better printing
+//        model.setNsPrefix( "schema", schemaURI );
+//        model.setNsPrefix( "ex", ex );
+//        model.setNsPrefix( "foaf", foaf );
+//        model.setNsPrefix( "usda", usdaURI );
+//        return model;
+//    }
+
+    // ==================================================================================
+    // ==========================     capuzb Contributions     ==========================
+    // ==================================================================================
+
     public static Model getAIMEBaseModel() {
-        // creating the model used in AIME tutorial with Person, Observe:eat usda:Apple
+        // Creating the model used in AIME tutorial with Person, Observe:eat usda:Apple
         Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
 
-        // create the resource
+        // Create the resources
         Resource user = model.createResource(personURI);
         Resource observation = model.createResource(observationURI);
-        // Apple usda food, User recored food weight, weight unit
         Resource usdaFood = model.createResource("http://idea.rpi.edu/heals/kb/usda#09003"); // An Apple
+
+        // Create properties
+        Property ateProperty = model.createProperty(ateURI);
+        Property typeProperty = model.createProperty(rdfURI + "type");
+        Property nameProperty = model.createProperty(nameURI); // New property for person's name
+
+        // Create literals
         Literal foodWeight = model.createTypedLiteral(new BigDecimal(200)); // xsd:decimal
-        String unitText   = "g";
-        // add the property
-        user.addProperty(model.createProperty(ateURI), observation);
-        user.addProperty(model.createProperty(rdfURI + "type"), user);
+        String unitText = "g"; // xsd:string
+        String brendanName = "Brendan"; // Name "Brendan"
 
-
+        // Add statements
+        user.addProperty(ateProperty, observation);
+        user.addProperty(typeProperty, user);
+        user.addProperty(nameProperty, brendanName); // Add name property with value "Brendan" to the person
         observation.addLiteral(model.createProperty(weightURI), foodWeight);
         observation.addProperty(model.createProperty(unitURI), unitText);
         observation.addProperty(model.createProperty(variableMeasuredURI), usdaFood);
         usdaFood.addLiteral(model.createProperty(usdaURI + "sugar"), model.createTypedLiteral(new BigDecimal(10.39)));
 
-        // set prefix for better printing
-        model.setNsPrefix( "schema", schemaURI );
-        model.setNsPrefix( "ex", ex );
-        model.setNsPrefix( "foaf", foaf );
-        model.setNsPrefix( "usda", usdaURI );
+        // Set prefix for better printing
+        model.setNsPrefix("schema", schemaURI);
+        model.setNsPrefix("ex", ex);
+        model.setNsPrefix("foaf", foaf);
+        model.setNsPrefix("usda", usdaURI);
+
         return model;
     }
+
+    // ==================================================================================
+    // ==========================     End of Contributions     ==========================
+    // ==================================================================================
 
     public static String getAIMERules() {
         String rule1 = "[rule1: ";
