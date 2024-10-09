@@ -1,0 +1,65 @@
+@startuml
+
+actor User
+participant "ExplanationRunner" as ER
+participant "Explainer" as E
+participant "ModelFactory" as MF
+
+group Trace-Based Explanation Loan Eligibility Test
+    User -> ER: runTraceBasedExplanationTestLoanEligibility()
+    activate ER
+
+    ER -> E: Create explainer
+    activate E
+
+    E -> MF: getLoanEligibilityBaseModel()
+    activate MF
+    note left of MF
+    Creates resources, properties,
+    literals, and initializes statements.
+    end note
+    E <-- MF: return LoanEligibilityBaseModel
+    E -> MF: getLoanEligibilityRules()
+    note left of MF
+    Creates three Loan Eligibility rules.
+    end note
+    E <-- MF: return LoanEligibilityRules
+    deactivate MF
+
+    E -> E: Setup data types for subjects, resources, and properties
+    
+      E -> E: GetFullTracedBaseExplanation_B(Triple)
+      activate E
+  
+        E -> E: generateInfModel(LoanEligibilityBaseModel)
+        activate E
+    
+        E -> E: Creates generic rule reasoner (Jena function) \nand returns as part of Inference Model
+        deactivate E
+        
+        E -> E: generateTraceBasedExplanation_B(LoanEligibilityBaseModel, \nInference Model, Triple)
+        activate E
+
+        E -> E: Lists all statements from Inference Model
+  
+        loop For each statement
+            E -> E: traceDerivation_B()
+            activate E
+
+            E -> E: Returns derivation for statement (Jena functions)
+            
+            E -> E: Appends derivation for statement to traceResponse
+            deactivate E
+        end loop
+        deactivate E
+    
+      deactivate E
+
+    E -> ER: return traceResponse
+    deactivate E
+
+    ER -> User: print traceResponse
+    deactivate ER
+end group
+
+@enduml

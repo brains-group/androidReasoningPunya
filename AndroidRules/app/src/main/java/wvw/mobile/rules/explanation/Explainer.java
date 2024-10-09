@@ -147,11 +147,6 @@ public class Explainer {
         return results;
     }
 
-
-    // ==================================================================================
-    // ==========================     capuzb Contributions     ==========================
-    // ==================================================================================
-
     /**
      * Generate counterfactual explanation for statement by comparing how this.baseModel reached the conclusion
      * compared to how otherBaseModel differs (or match) the conclusion by using the same ruleSet, this.rules.
@@ -409,14 +404,6 @@ public class Explainer {
         }
         return results;
     }
-
-
-    // ==================================================================================
-    // ==========================     End of Contributions     ==========================
-    // ==================================================================================
-
-
-
 
     /**
      * Produces a single-sentence contextual explanation as to how the inputted statement

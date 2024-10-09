@@ -98,23 +98,22 @@ public class ExplanationRunner {
         print(traceResponse);
     }
 
-
-    // ==================================================================================
-    // ==========================     capuzb Contributions     ==========================
-    // ==================================================================================
-
     public static void runTraceBasedExplanationTestAIME(){
 
         print("Running Trace-Based Explanation Test on AIME...");
 
         // Set up the Explainer
         Explainer explainer = new Explainer();
+        print("\tCreated explainer");
         explainer.Model(ModelFactory.getAIMEBaseModel());
+        print("\tCreated base model");
         explainer.Rules(ModelFactory.getAIMERules());
+        print("\tCreated rules");
         // explainer.Model().createTypedLiteral( (Double)20.78).getValue();
         // XSDDatatype xsdDouble = XSDDatatype.XSDdouble;
         TypeMapper tm = TypeMapper.getInstance();
         RDFDatatype xsdDouble = tm.getTypeByName("http://www.w3.org/2001/XMLSchema#double");
+        print("\tDefined data types");
 
         // Demonstrate a trace-based explanation.
         String traceResponse = explainer.GetFullTracedBaseExplanation_B(
@@ -127,6 +126,41 @@ public class ExplanationRunner {
                 // null);
         print(traceResponse);
     }
+
+    public static void runTraceBasedExplanationTestLoanEligibility() {
+
+        print("Running Trace-Based Explanation Test on Loan Eligibility...");
+
+        // Set up the Explainer
+        Explainer explainer = new Explainer();
+        print("\tCreated explainer:\t" + explainer);
+        explainer.Model(ModelFactory.getLoanEligibilityBaseModel());
+        print("\tCreated Base Model:\t" + explainer.Model());
+        explainer.Rules(ModelFactory.getLoanEligibilityRules());
+        print("\tCreated Rules:\t" + explainer.Rules());
+
+        // Define the RDFDatatype for double
+        TypeMapper tm = TypeMapper.getInstance();
+        RDFDatatype xsdDouble = tm.getTypeByName("http://www.w3.org/2001/XMLSchema#double");
+
+        // Set up the resource for the applicant
+        Resource applicant = explainer.Model().getResource("http://xmlns.com/foaf/0.1/Person");
+
+        // Define the property for debt-to-income ratio (this is what the rules calculate)
+        Property debtToIncomeRatioProperty = explainer.Model().getProperty("http://example.com/debtToIncomeRatio");
+
+        print("\tDefined data types");
+
+        // Generate a trace-based explanation for the applicant's loan eligibility
+        String traceResponse = explainer.GetFullTracedBaseExplanation_B(
+                applicant,
+                debtToIncomeRatioProperty,
+                ResourceFactory.createTypedLiteral("0.30", xsdDouble));  // Assume a debt-to-income ratio for testing
+
+        // Print the trace-based explanation
+        print(traceResponse);
+    }
+
 
     public static void runContextualExplanationTestAIME(){
 
@@ -189,16 +223,76 @@ public class ExplanationRunner {
         print(result);
     }
 
-    public static void runContrastiveExplanationTestAIME(){
+    public static void runCounterfactualExplanationTestLoanEligibility() {
 
-        print("Running Contrastive Explanation Test on AIME...");
+        System.out.println("Running Counterfactual Explanation Test on Loan Eligibility...");
 
-        // TODO
+        // Set-up the Explainer
+        Explainer explainer = new Explainer();
+        explainer.Model(ModelFactory.getLoanEligibilityBaseModel());
+        explainer.Rules(ModelFactory.getLoanEligibilityRules());
+
+        // Set-up the Additional Model needed to run the counterfactual explanation
+        InfModel infModel = ModelFactory.getLoanEligibilityInfModel();
+
+        Resource applicant = infModel.getResource(ModelFactory.getPersonURI());
+        Property loanEligibility = infModel.getProperty("http://example.com/loanEligibility");
+
+        // List the statements about the applicant's loan eligibility
+        StmtIterator itr = infModel.listStatements(applicant, loanEligibility, (RDFNode) null);
+
+        // Use the Explainer to generate a counterfactual explanation.
+        String result = "LoanEligibility_Explainer -- Counterfactual Explanation\n";
+        while (itr.hasNext()) {
+            Statement s = itr.next();
+            result += explainer.GetFullCounterfactualExplanation_B(s, ModelFactory.getLoanEligibilityBaseModelSecondType());
+        }
+        System.out.println(result);
     }
 
-    // ==================================================================================
-    // ==========================     End of Contributions     ==========================
-    // ==================================================================================
+//    public static void runContrastiveExplanationTestAIME() {
+//
+//        print("Running Contrastive Explanation Test on AIME...");
+//
+//        // Set-up the Explainer
+//        Explainer explainer = new Explainer();
+//        explainer.Model(ModelFactory.getAIMEBaseModel());  // Set model
+//        explainer.Rules(ModelFactory.getAIMERules());      // Set rules
+//
+//        // Set-up the Additional Model needed to run the contrastive explanation
+//        InfModel infModel = ModelFactory.getAIMEInfModel();
+//
+//        // Define resources and properties involved in the explanation
+//        Resource person = infModel.getResource(ModelFactory.getPersonURI());
+//        Property totalSugars = infModel.getProperty("http://example.com/totalSugars");
+//
+//        // Gather actual facts (the factual statements)
+//        StmtIterator factualIterator = infModel.listStatements(person, totalSugars, (RDFNode) null);
+//
+//        // Assume we want to contrast it with a hypothetical scenario where the person ate less sugar
+//        Model contrastiveModel = ModelFactory.getAIMEBaseModelWithLessSugar();
+//
+//        // Create a string to store the results of the contrastive explanation
+//        String results = "AIME_Explainer -- ContrastiveExplanation\n";
+//
+//        // Iterate over the factual statements and generate contrastive explanations
+//        while (factualIterator.hasNext()) {
+//            Statement factualStatement = factualIterator.next();
+//
+//            // Generate the factual explanation
+//            String factualExplanation = explainer.GetFullFactualExplanation(factualStatement, ModelFactory.getAIMEBaseModelBanana());
+//
+//            // Generate the contrastive explanation by comparing with a hypothetical scenario
+//            String contrastiveExplanation = explainer.GetContrastiveExplanation(factualStatement, contrastiveModel);
+//
+//            // Append both explanations to the result
+//            results += "Factual Explanation: \n" + factualExplanation + "\n";
+//            results += "Contrastive Explanation: \n" + contrastiveExplanation + "\n\n";
+//        }
+//
+//        // Print the contrastive explanation results
+//        print(results);
+//    }
 
     public static void run () {
         // Create model...
@@ -207,13 +301,17 @@ public class ExplanationRunner {
         print(ModelFactory.getAIMEBaseModel().toString());
         print(ModelFactory.getAIMERules());
 
-        runContextualExplanationTest();
-        runCounterfactualExplanationTest();
         runTraceBasedExplanationTest();
-        // Brendan's Tests
+        runTraceBasedExplanationTestLoanEligibility();
         runTraceBasedExplanationTestAIME();
+
+        runContextualExplanationTest();
         runContextualExplanationTestAIME();
+
+        runCounterfactualExplanationTest();
         runCounterfactualExplanationTestAIME();
-        runContrastiveExplanationTestAIME();
+        runCounterfactualExplanationTestLoanEligibility();
+
+        // runContrastiveExplanationTestAIME();
     }
 }
