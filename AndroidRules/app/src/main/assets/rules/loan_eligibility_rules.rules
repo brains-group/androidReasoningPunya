@@ -1,0 +1,22 @@
+[rule1:
+    (?applicant schema:income ?monthlyIncome)
+    (?applicant schema:debt ?monthlyDebt)
+    quotient(?monthlyDebt, ?monthlyIncome, ?debtToIncomeRatio)
+    -> (?applicant ex:debtToIncomeRatio ?debtToIncomeRatio)
+]
+
+[rule2:
+    (?applicant schema:creditScore ?creditScore)
+    (?applicant ex:debtToIncomeRatio ?debtToIncomeRatio)
+    lessThanOrEqual(?debtToIncomeRatio, '0.35'^^xsd:float)
+    greaterThanOrEqual(?creditScore, '620'^^xsd:integer)
+    -> (?applicant ex:loanEligibility "Eligible")
+]
+
+[rule3:
+    (?applicant ex:debtToIncomeRatio ?debtToIncomeRatio)
+    (?applicant schema:creditScore ?creditScore)
+    not(lessThanOrEqual(?debtToIncomeRatio, '0.35'^^xsd:float))
+    or(not(greaterThanOrEqual(?creditScore, '620'^^xsd:integer)))
+    -> (?applicant ex:loanEligibility "Not Eligible")
+]

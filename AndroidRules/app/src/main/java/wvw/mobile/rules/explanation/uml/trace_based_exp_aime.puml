@@ -1,42 +1,49 @@
-@startuml
+@startuml Trace-Based_Explanation_Test_AIME
 
 actor User
 participant "ExplanationRunner" as ER
 participant "Explainer" as E
 participant "ModelFactory" as MF
 
-group Trace-Based Explanation Test
-    User -> ER: runTraceBasedExplanationTest()
+group Trace-Based Explanation AIME Test
+    User -> ER: runTraceBasedExplanationTestAIME()
     activate ER
 
     ER -> E: Create explainer
     activate E
 
-    E -> MF: getTransitiveBaseModel()
+    E -> MF: getAIMEBaseModel()
     activate MF
-    E <-- MF: return TransitiveBaseModel
+    note left of MF
+    Creates resources, properties,
+    literals, and initializes statements.
+    end note
+    E <-- MF: return AIMEBaseModel
+    E -> MF: getAIMERules()
+    note left of MF
+    Creates two AIME rules.
+    end note
+    E <-- MF: return AIMERules
     deactivate MF
-
-    E -> E: Load rules into Explainer rules
-      
-      E -> E: GetFullTracedBaseExplanation()
+    
+      E -> E: GetFullTracedBaseExplanation_B(Triple)
       activate E
-        
-        E -> E: generateInfModel(TransitiveBaseModel)
+  
+        E -> E: generateInfModel(AIMEBaseModel)
         activate E
     
         E -> E: Creates generic rule reasoner (Jena function) \nand returns as part of Inference Model
         deactivate E
-
-        E -> E: generateTraceBasedExplanation(TransitiveBaseModel, \nInference Model, Triple)
+        
+        E -> E: generateTraceBasedExplanation_B(AIMEBaseModel, \nInference Model, Triple)
         activate E
-    
+
         E -> E: Lists all statements from Inference Model
   
-        loop For each statement (triple?)
-            E -> E: traceDerivation()
+        loop For each statement
+            E -> E: traceDerivation_B()
             activate E
-            
+
             E -> E: Returns derivation for statement (Jena functions)
             
             E -> E: Appends derivation for statement to traceResponse

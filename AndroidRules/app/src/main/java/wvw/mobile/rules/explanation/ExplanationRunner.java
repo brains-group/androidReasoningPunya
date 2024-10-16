@@ -127,6 +127,7 @@ public class ExplanationRunner {
         print(traceResponse);
     }
 
+
     public static void runTraceBasedExplanationTestLoanEligibility() {
 
         print("Running Trace-Based Explanation Test on Loan Eligibility...");
@@ -298,20 +299,34 @@ public class ExplanationRunner {
         // Create model...
         PrintUtil.registerPrefix("ex", ModelFactory.getGlobalURI());
 
+        // Models and Rules
+        print("Transitive Base Model & Rules:");
+        print(ModelFactory.getTransitiveBaseModel().toString());
+        print("[transitiveRule: (?a ex:equals ?b) (?b ex:equals ?c) -> (?a ex:equals ?c)]");
+        print("AIME Base Model & Rules & Inf Model:");
         print(ModelFactory.getAIMEBaseModel().toString());
         print(ModelFactory.getAIMERules());
+        print(ModelFactory.getAIMEInfModel().toString());
+        print("Loan Eligibility Base Model & Rules & Inf Model:");
+        print(ModelFactory.getLoanEligibilityBaseModel().toString());
+        print(ModelFactory.getLoanEligibilityRules());
+        print(ModelFactory.getLoanEligibilityInfModel().toString());
 
+        // Trace-Based Explanations
         runTraceBasedExplanationTest();
-        runTraceBasedExplanationTestLoanEligibility();
         runTraceBasedExplanationTestAIME();
+        runTraceBasedExplanationTestLoanEligibility();
 
+        // Contextual Explanations
         runContextualExplanationTest();
         runContextualExplanationTestAIME();
 
+        // Counterfactual Explanations
         runCounterfactualExplanationTest();
         runCounterfactualExplanationTestAIME();
         runCounterfactualExplanationTestLoanEligibility();
 
+        // Contrastive Explanations
         // runContrastiveExplanationTestAIME();
     }
 }

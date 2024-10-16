@@ -1,0 +1,16 @@
+[rule1: 
+( ?var schema:weight ?weight ) 
+( ?var schema:variableMeasured ?foodstuff ) 
+( ?foodstuff usda:sugar ?sugarsPer100g ) 
+quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) 
+product(?scaledWeight, ?sugarsPer100g, ?sugars) 
+-> (?var ex:sugars ?sugars)
+]
+
+[rule2: 
+( ?user rdf:type foaf:Person) 
+( ?user ex:ate ?food) 
+( ?food ex:sugars ?sugar) 
+sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) 
+-> ( ?user ex:totalSugars ?totalSugars ) 
+]

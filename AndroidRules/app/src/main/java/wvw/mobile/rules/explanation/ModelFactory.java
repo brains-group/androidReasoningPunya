@@ -1,6 +1,10 @@
 package wvw.mobile.rules.explanation;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import com.hp.hpl.jena.rdf.model.InfModel;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
@@ -11,6 +15,12 @@ import com.hp.hpl.jena.reasoner.rulesys.Rule;
 import com.hp.hpl.jena.reasoner.Reasoner;
 import com.hp.hpl.jena.util.PrintUtil;
 import com.hp.hpl.jena.vocabulary.RDF;
+import android.content.Context;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import android.content.res.AssetManager;
+
 
 public class ModelFactory {
     // Global URI
@@ -241,88 +251,144 @@ public class ModelFactory {
 //        return rule1 + " " + rule2;
 //    }
 
+//     public static String getAIMERules() {
+//         String rule1 = "[rule1: ";
+//         rule1 += "( ?var schema:weight ?weight ) ";
+//         rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
+//         rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
+//         rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
+//         rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
+//         rule1 += "-> (?var ex:sugars ?sugars)";
+//         rule1 += "]";
+//
+//         String rule2 = "[rule2: ";
+//         rule2 += "( ?user rdf:type foaf:Person) ";
+//         rule2 += "( ?user ex:ate ?food) ";
+//         rule2 += "( ?food ex:sugars ?sugar) ";
+//         rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
+//         rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
+//         rule2 += "]";
+//
+//         return rule1 + " " + rule2;
+//     }
+
     public static String getAIMERules() {
-        // Define only the rules without prefixes
         String rule1 = "[rule1: ";
-        rule1 += "( ?var schema:weight ?weight ) ";
-        rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
-        rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
+        rule1 += "( ?var <http://schema.org/weight> ?weight ) ";
+        rule1 += "( ?var <http://schema.org/variableMeasured> ?foodstuff ) ";
+        rule1 += "( ?foodstuff <http://usda.gov/sugar> ?sugarsPer100g ) ";
         rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
         rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
-        rule1 += "-> (?var ex:sugars ?sugars)";
+        rule1 += "-> (?var <http://example.com/sugars> ?sugars) ";
         rule1 += "]";
 
         String rule2 = "[rule2: ";
-        rule2 += "( ?user rdf:type foaf:Person) ";
-        rule2 += "( ?user ex:ate ?food) ";
-        rule2 += "( ?food ex:sugars ?sugar) ";
+        rule2 += "( ?user rdf:type <http://xmlns.com/foaf/0.1/Person> ) ";
+        rule2 += "( ?user <http://example.com/ate> ?food ) ";
+        rule2 += "( ?food <http://example.com/sugars> ?sugar ) ";
         rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
-        rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
+        rule2 += "-> ( ?user <http://example.com/totalSugars> ?totalSugars ) ";
         rule2 += "]";
 
-        // Return only the rules
+        // Return the rules as a single string
         return rule1 + " " + rule2;
     }
 
 
-//    public static String getLoanEligibilityRules() {
+//    public static String getAIMERules() {
+//        // Declare the necessary prefixes for the rule
+//        StringBuilder rules = new StringBuilder();
+//
+//        rules.append("[prefix schema: <http://schema.org/> ");
+//        rules.append("prefix usda: <http://usda.gov/> ");
+//        rules.append("prefix ex: <http://example.com/> ");
+//        rules.append("prefix foaf: <http://xmlns.com/foaf/0.1/>] ");
+//
+//        // Define only the rules without prefixes
 //        String rule1 = "[rule1: ";
-//        rule1 += "( ?applicant schema:income ?monthlyIncome ) ";
-//        rule1 += "( ?applicant schema:debt ?monthlyDebt ) ";
-//        rule1 += "quotient(?monthlyDebt, ?monthlyIncome, ?debtToIncomeRatio) ";
-//        rule1 += "-> (?applicant ex:debtToIncomeRatio ?debtToIncomeRatio) ";
+//        rule1 += "( ?var schema:weight ?weight ) ";
+//        rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
+//        rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
+//        rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
+//        rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
+//        rule1 += "-> (?var ex:sugars ?sugars) ";
 //        rule1 += "]";
 //
 //        String rule2 = "[rule2: ";
-//        rule2 += "( ?applicant schema:creditScore ?creditScore ) ";
-//        rule2 += "( ?applicant ex:debtToIncomeRatio ?debtToIncomeRatio ) ";
-//        rule2 += "lessThanOrEqual(?debtToIncomeRatio, '0.35'^^http://www.w3.org/2001/XMLSchema#float) ";
-//        rule2 += "greaterThanOrEqual(?creditScore, '620'^^http://www.w3.org/2001/XMLSchema#integer) ";
-//        rule2 += "-> (?applicant ex:loanEligibility \"Eligible\")";
+//        rule2 += "( ?user rdf:type foaf:Person) ";
+//        rule2 += "( ?user ex:ate ?food) ";
+//        rule2 += "( ?food ex:sugars ?sugar) ";
+//        rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
+//        rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
 //        rule2 += "]";
 //
-//        String rule3 = "[rule3: ";
-//        rule3 += "( ?applicant ex:debtToIncomeRatio ?debtToIncomeRatio ) ";
-//        rule3 += "( ?applicant schema:creditScore ?creditScore ) ";
-//        rule3 += "not(lessThanOrEqual(?debtToIncomeRatio, '0.35'^^http://www.w3.org/2001/XMLSchema#float)) ";
-//        rule3 += "or(not(greaterThanOrEqual(?creditScore, '620'^^http://www.w3.org/2001/XMLSchema#integer))) ";
-//        rule3 += "-> (?applicant ex:loanEligibility \"Not Eligible\")";
-//        rule3 += "]";
+//        // Return only the rules, including the prefixes
+//        return rules.toString() + rule1 + " " + rule2;
+//    }
+
+
+//    public static String getAIMERules() {
+//        StringBuilder rules = new StringBuilder();
 //
-//        return rule1 + " " + rule2 + " " + rule3;
+//        try {
+//            // Read all lines from the file and concatenate them into a single string
+//            for (String line : Files.readAllLines(Paths.get("rules/aime_rules.rules"))) {
+//                rules.append(line).append(" ");
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return rules.toString();
+//    }
+
+//    public static String getAIMERules(Context context) {
+//        StringBuilder rules = new StringBuilder();
+//
+//        try {
+//            // Open the rules file from the assets folder
+//            InputStream is = context.getAssets().open("rules/aime_rules.rules");
+//            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+//
+//            String line;
+//            while ((line = reader.readLine()) != null) {
+//                rules.append(line).append(" ");
+//            }
+//
+//            reader.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return rules.toString();
 //    }
 
     public static String getLoanEligibilityRules() {
-        String prefixes =
-                "@prefix schema: <http://schema.org/> . " +
-                        "@prefix ex: <http://example.com/> . ";
-
         String rule1 = "[rule1: ";
-        rule1 += "( ?applicant schema:income ?monthlyIncome ) ";
-        rule1 += "( ?applicant schema:debt ?monthlyDebt ) ";
+        rule1 += "( ?applicant <http://schema.org/income> ?monthlyIncome ) ";
+        rule1 += "( ?applicant <http://schema.org/debt> ?monthlyDebt ) ";
         rule1 += "quotient(?monthlyDebt, ?monthlyIncome, ?debtToIncomeRatio) ";
-        rule1 += "-> (?applicant ex:debtToIncomeRatio ?debtToIncomeRatio) ";
+        rule1 += "-> (?applicant <http://example.com/debtToIncomeRatio> ?debtToIncomeRatio) ";
         rule1 += "]";
 
         String rule2 = "[rule2: ";
-        rule2 += "( ?applicant schema:creditScore ?creditScore ) ";
-        rule2 += "( ?applicant ex:debtToIncomeRatio ?debtToIncomeRatio ) ";
-        rule2 += "lessThanOrEqual(?debtToIncomeRatio, '0.35'^^http://www.w3.org/2001/XMLSchema#float) ";
-        rule2 += "greaterThanOrEqual(?creditScore, '620'^^http://www.w3.org/2001/XMLSchema#integer) ";
-        rule2 += "-> (?applicant ex:loanEligibility \"Eligible\")";
+        rule2 += "( ?applicant <http://schema.org/creditScore> ?creditScore ) ";
+        rule2 += "( ?applicant <http://example.com/debtToIncomeRatio> ?debtToIncomeRatio ) ";
+        rule2 += "lessThanOrEqual(?debtToIncomeRatio, '0.35'^^xsd:float) ";
+        rule2 += "greaterThanOrEqual(?creditScore, '620'^^xsd:integer) ";
+        rule2 += "-> (?applicant <http://example.com/loanEligibility> \"Eligible\")";
         rule2 += "]";
 
         String rule3 = "[rule3: ";
-        rule3 += "( ?applicant ex:debtToIncomeRatio ?debtToIncomeRatio ) ";
-        rule3 += "( ?applicant schema:creditScore ?creditScore ) ";
-        rule3 += "not(lessThanOrEqual(?debtToIncomeRatio, '0.35'^^http://www.w3.org/2001/XMLSchema#float)) ";
-        rule3 += "or(not(greaterThanOrEqual(?creditScore, '620'^^http://www.w3.org/2001/XMLSchema#integer))) ";
-        rule3 += "-> (?applicant ex:loanEligibility \"Not Eligible\")";
+        rule3 += "( ?applicant <http://example.com/debtToIncomeRatio> ?debtToIncomeRatio ) ";
+        rule3 += "( ?applicant <http://schema.org/creditScore> ?creditScore ) ";
+        rule3 += "not(lessThanOrEqual(?debtToIncomeRatio, '0.35'^^xsd:float)) ";
+        rule3 += "or(not(greaterThanOrEqual(?creditScore, '620'^^xsd:integer))) ";
+        rule3 += "-> (?applicant <http://example.com/loanEligibility> \"Not Eligible\")";
         rule3 += "]";
 
-        return prefixes + rule1 + " " + rule2 + " " + rule3;
+        return rule1 + " " + rule2 + " " + rule3;
     }
-
 
 
     public static InfModel getAIMEInfModel() {

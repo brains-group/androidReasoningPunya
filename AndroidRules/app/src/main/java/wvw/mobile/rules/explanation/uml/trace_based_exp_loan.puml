@@ -1,4 +1,4 @@
-@startuml
+@startuml Trace-Based_Explanation_Test_Loan-Eligibility
 
 actor User
 participant "ExplanationRunner" as ER

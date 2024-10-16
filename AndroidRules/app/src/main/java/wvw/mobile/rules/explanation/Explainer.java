@@ -318,6 +318,10 @@ public class Explainer {
 
         String answer = "";
         StmtIterator stmtItr = inf.listStatements(subject, predicate, object);
+
+        // Debug
+        Log.d("Explanation-Runner", "Base Model: " + baseModel.toString() + "\nInf Model: " + inf.toString() + "\nTriple: (" + subject + ", " + predicate + ", " + object + ")");
+
         while ( stmtItr.hasNext() )
         {
             Statement s = stmtItr.next();

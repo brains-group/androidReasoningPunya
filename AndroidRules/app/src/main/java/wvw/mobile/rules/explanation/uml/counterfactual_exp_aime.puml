@@ -1,12 +1,12 @@
-@startuml
+@startuml Counterfactual_Explanation_Test_AIME
 
 actor User
 participant "ExplanationRunner" as ER
 participant "Explainer" as E
 participant "ModelFactory" as MF
 
-group Trace-Based Explanation AIME Test
-    User -> ER: runTraceBasedExplanationTestAIME()
+group Counterfactual Explanation Test AIME
+    User -> ER: runCounterfactualExplanationTestAIME()
     activate ER
 
     ER -> E: Create explainer
@@ -24,9 +24,38 @@ group Trace-Based Explanation AIME Test
     Creates two AIME rules.
     end note
     E <-- MF: return AIMERules
+    E -> MF: getAIMEInfModel()
+    note left of MF
+    Generates inference model.
+    end note
+    E <-- MF: return AIMEInfModel
     deactivate MF
+
+    activate E
+    E -> E: Lists all statements from Inference Model
+
+    loop For each statement
+        E -> E: GetFullCounterfactualExplanation_B(Statement, OtherBaseModel - Banana)
+        activate E
+
+        E -> MF: generateInfModel(baseModel)
+        activate MF
+        MF -> E: return AIMEBaseInfModel
+        E -> MF: generateInfModel(otherBaseModel)
+        MF -> E: return AIMEOtherBaseInfModel
+        deactivate MF
+
+
+        E -> E: Returns baseModel and otherbaseModel derivation for statement (Jena functions)
+        
+        E -> E: Appends derivation for statement to traceResponse (FIX THIS HERE)
+        deactivate E
+    end loop
+    deactivate E
+
+
     
-      E -> E: GetFullTracedBaseExplanation_B(Triple)
+      E -> E: GetAIMEInfModel()
       activate E
   
         E -> E: generateInfModel(AIMEBaseModel)

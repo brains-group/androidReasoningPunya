@@ -1,0 +1,56 @@
+@startuml Trace-Based_Explanation_Test_Transitive
+
+actor User
+participant "ExplanationRunner" as ER
+participant "Explainer" as E
+participant "ModelFactory" as MF
+
+group Trace-Based Explanation Test
+    User -> ER: runTraceBasedExplanationTest()
+    activate ER
+
+    ER -> E: Create explainer
+    activate E
+
+    E -> MF: getTransitiveBaseModel()
+    activate MF
+    E <-- MF: return TransitiveBaseModel
+    deactivate MF
+
+    E -> E: Load rules into Explainer rules
+      
+      E -> E: GetFullTracedBaseExplanation()
+      activate E
+        
+        E -> E: generateInfModel(TransitiveBaseModel)
+        activate E
+    
+        E -> E: Creates generic rule reasoner (Jena function) \nand returns as part of Inference Model
+        deactivate E
+
+        E -> E: generateTraceBasedExplanation(TransitiveBaseModel, \nInference Model, Triple)
+        activate E
+    
+        E -> E: Lists all statements from Inference Model
+  
+        loop For each statement (triple?)
+            E -> E: traceDerivation()
+            activate E
+            
+            E -> E: Returns derivation for statement (Jena functions)
+            
+            E -> E: Appends derivation for statement to traceResponse
+            deactivate E
+        end loop
+        deactivate E
+    
+      deactivate E
+
+    E -> ER: return traceResponse
+    deactivate E
+
+    ER -> User: print traceResponse
+    deactivate ER
+end group
+
+@enduml
