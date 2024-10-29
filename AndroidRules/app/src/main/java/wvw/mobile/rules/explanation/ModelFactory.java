@@ -274,23 +274,21 @@ public class ModelFactory {
 
     public static String getAIMERules() {
         String rule1 = "[rule1: ";
-        rule1 += "( ?var <http://schema.org/weight> ?weight ) ";
-        rule1 += "( ?var <http://schema.org/variableMeasured> ?foodstuff ) ";
-        rule1 += "( ?foodstuff <http://usda.gov/sugar> ?sugarsPer100g ) ";
+        rule1 += "( ?var schema:weight ?weight ) ";
+        rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
+        rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
         rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
         rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
-        rule1 += "-> (?var <http://example.com/sugars> ?sugars) ";
+        rule1 += "-> (?var ex:sugars ?sugars)";
         rule1 += "]";
-
         String rule2 = "[rule2: ";
-        rule2 += "( ?user rdf:type <http://xmlns.com/foaf/0.1/Person> ) ";
-        rule2 += "( ?user <http://example.com/ate> ?food ) ";
-        rule2 += "( ?food <http://example.com/sugars> ?sugar ) ";
+        rule2 += "( ?user rdf:type foaf:Person) ";
+        rule2 += "( ?user ex:ate ?food) ";
+        rule2 += "( ?food ex:sugars ?sugar) ";
         rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
-        rule2 += "-> ( ?user <http://example.com/totalSugars> ?totalSugars ) ";
+        rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
         rule2 += "]";
 
-        // Return the rules as a single string
         return rule1 + " " + rule2;
     }
 

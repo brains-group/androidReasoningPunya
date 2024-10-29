@@ -1,92 +1,114 @@
-@startuml Counterfactual_Explanation_Test_AIME
-
+@startuml
 actor User
 participant "ExplanationRunner" as ER
 participant "Explainer" as E
 participant "ModelFactory" as MF
 
-group Counterfactual Explanation Test AIME
-    User -> ER: runCounterfactualExplanationTestAIME()
+User -> ER: run()
+
+group Counterfactual Explanation Test
+    
+    activate ER
+
+    ER -> ER: runExplanationTest(\n"aime", "counterfactual")
+
+    activate ER
+
+    ER -> ER: runCounterfactualExplanationTestAIME()
+
     activate ER
 
     ER -> E: Create explainer
     activate E
+    E --> ER
 
+    ER -> E: Load model into explainer
+    
     E -> MF: getAIMEBaseModel()
     activate MF
-    note left of MF
-    Creates resources, properties,
-    literals, and initializes statements.
-    end note
     E <-- MF: return AIMEBaseModel
+    deactivate MF
+    
+    E --> ER
+    ER -> E: Load rules into Explainer
+    
     E -> MF: getAIMERules()
-    note left of MF
-    Creates two AIME rules.
+    activate MF
+    note right
+      Need to add loading rules 
+      from rules/text file
     end note
     E <-- MF: return AIMERules
-    E -> MF: getAIMEInfModel()
-    note left of MF
-    Generates inference model.
-    end note
-    E <-- MF: return AIMEInfModel
     deactivate MF
-
+    
+    E --> ER
+    
+    E -> E: generateInfModel(baseModel)
+    note right
+      Utilizes built-in Jena functions
+      to create inf model
+    end note
     activate E
-    E -> E: Lists all statements from Inference Model
-
-    loop For each statement
-        E -> E: GetFullCounterfactualExplanation_B(Statement, OtherBaseModel - Banana)
-        activate E
-
-        E -> MF: generateInfModel(baseModel)
-        activate MF
-        MF -> E: return AIMEBaseInfModel
-        E -> MF: generateInfModel(otherBaseModel)
-        MF -> E: return AIMEOtherBaseInfModel
-        deactivate MF
-
-
-        E -> E: Returns baseModel and otherbaseModel derivation for statement (Jena functions)
-        
-        E -> E: Appends derivation for statement to traceResponse (FIX THIS HERE)
-        deactivate E
-    end loop
-    deactivate E
-
-
     
-      E -> E: GetAIMEInfModel()
+    E -> E: Creates generic rule reasoner with explainer rules
+
+    E -> E: Create inference model with generic \nrule reasoner and baseModel
+    
+    E --> E: Return inference model
+    deactivate E
+        
+    ER -> ER: List all statements from infModel that \nhave subj, prop, obj (including wildcards)
+    
+    ER -> E: Retrieve other baseModel
+    
+    E -> MF: getAIMEBaseModelBanana()
+    activate MF
+    E <-- MF: return AIMEBaseModelBanana
+    deactivate MF
+    
+    E --> ER
+    
+    loop For each statement (subj, prop, obj)
+        ER -> E: Develop counterfactual explanation \nwith explainer and other baseModel
+        E -> E: GetFullCounterfactualExplanation_B(\nstatement, otherBaseModel)
       activate E
-  
-        E -> E: generateInfModel(AIMEBaseModel)
+        E -> E: generateInfModel(baseModel)
+        note right
+          Utilizes built-in Jena functions
+          to create inf model
+        end note
         activate E
+        
+        E -> E: Creates generic rule reasoner with explainer rules
     
-        E -> E: Creates generic rule reasoner (Jena function) \nand returns as part of Inference Model
+        E -> E: Create inference model with generic \nrule reasoner and baseModel
+        
+        E --> E: Return inference model
         deactivate E
         
-        E -> E: generateTraceBasedExplanation_B(AIMEBaseModel, \nInference Model, Triple)
+        E -> E: generateInfModel(otherBaseModel)
+        note right
+          Utilizes built-in Jena functions
+          to create inf model
+        end note
         activate E
-
-        E -> E: Lists all statements from Inference Model
-  
-        loop For each statement
-            E -> E: traceDerivation_B()
-            activate E
-
-            E -> E: Returns derivation for statement (Jena functions)
-            
-            E -> E: Appends derivation for statement to traceResponse
-            deactivate E
-        end loop
-        deactivate E
+        
+        E -> E: Creates generic rule reasoner with explainer rules
     
+        E -> E: Create inference model with generic \nrule reasoner and otherBaseModel
+        
+        E --> E: Return inference model
+        deactivate E
+        
+        
+        
+        
       deactivate E
+    end loop
+        
 
-    E -> ER: return traceResponse
-    deactivate E
-
-    ER -> User: print traceResponse
+    ER --> User: print traceResponse
     deactivate ER
-end group
 
+end group
 @enduml

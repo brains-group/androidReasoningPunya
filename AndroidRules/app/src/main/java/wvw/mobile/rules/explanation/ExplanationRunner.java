@@ -302,7 +302,7 @@ public class ExplanationRunner {
             } else if (explanation.equals("contextual")) {
                 runContextualExplanationTest();
             } else if (explanation.equals("counterfactual")) {
-                runCounterfactualExplanationTest();
+                runCounterfactualExplanationTest(); // INCORRECT: Runs an AIME test
             } else {
                 System.out.println("Invalid explanation: " + explanation);
             }
@@ -363,7 +363,7 @@ public class ExplanationRunner {
 
         // Counterfactual Explanations
         runExplanationTest("transitive", "counterfactual");
-//        runExplanationTest("aime", "counterfactual");
+        runExplanationTest("aime", "counterfactual");
 //        runExplanationTest("loan-eligibility", "counterfactual");
         // runCounterfactualExplanationTest();
         // runCounterfactualExplanationTestAIME();
