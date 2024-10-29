@@ -1,0 +1,141 @@
+@startuml Explanation Class Diagram
+
+package "wvw_mobile_rules_explanation" {
+    
+    class ExplanationRunner {
+        + print(String message)
+        + run()
+
+        + runTraceBasedExplanationTest()
+        + runTraceBasedExplanationTestAIME()
+        + runTraceBasedExplanationTestLoanEligibility()
+        
+        + runContextualExplanationTest()
+        + runContextualExplanationTestAIME()
+        
+        + runCounterfactualExplanationTest()
+        + runCounterfactualExplanationTestAIME()
+        + runCounterfactualExplanationTestLoanEligibility()
+        
+        + runContrastiveExplanationTestAIME()
+    }
+
+    class Explainer {
+        - baseModel: Model
+        - rules: String
+    
+        + Explainer()
+        + Model(): Model
+        + Model(Model model)
+        + Rules(): String
+        + Rules(String rules)
+        
+        + describeTriple(Triple triple): String
+        + describeStatement(Statement statement): String
+        + generateInfModel(Model baseModel): InfModel
+        + generateStatement(Triple triple): Statement
+
+        + GetFullTracedBaseExplanation(Object subject, 
+            Object property, Object object): String
+        + GetFullTracedBaseExplanation_B(Object subject, 
+            Object property, Object object): String
+
+        + generateTraceBasedExplanation(Model baseModel, InfModel inf,
+            Resource subject, Property predicate, RDFNode object): String
+        + generateTraceBasedExplanation_B(Model baseModel, InfModel inf, 
+            Resource subject, Property predicate, RDFNode object): String
+
+        + traceDerivation(InfModel infModel, Model baseModel, 
+            Statement statement, int tabs): String
+        + traceDerivation_B(InfModel infModel, Model baseModel, 
+            Statement statement, int tabs): String
+
+        + GetShallowContextualExplanation(Object resource, 
+            Object property, Object object): String
+        + generateShallowTrace(Statement s, InfModel model): String
+
+        + GetSimpleContextualExplanation(Object resource, 
+            Object property, Object object): String
+        + generateSimpleContextualExplanation(Statement s, 
+            InfModel model): String
+        
+        + GetFullCounterfactualExplanation(Statement statement, 
+            Model otherBaseModel): String
+        + GetFullCounterfactualExplanation_B(Statement statement, 
+            Model otherBaseModel): String
+    }
+
+    class ModelFactory {
+        - ex: String
+        - rdfURI: String
+        - schemaURI: String
+        - observationURI: String
+        - unitURI: String
+        - foaf: String
+        - personURI: String
+        - nameURI: String
+        
+        - ateURI: String
+        - weightURI: String
+        - variableMeasuredURI: String
+        - usdaURI: String
+        
+        - incomeURI: String
+        - debtURI: String
+        - creditScoreURI: String
+        - valueURI: String
+        - loanEligibilityURI: String
+        
+        + getGlobalURI(): String
+        + getPersonURI(): String
+        
+        + getTransitiveBaseModel(): Model
+        + getTransitiveInfModel(): Model
+        
+        + getAIMERules(): String
+        + getAIMEBaseModel(): Model
+        + getAIMEInfModel(): InfModel
+        + getAIMEBaseModelBanana(): Model
+        + getAIMEInfModelBanana(): InfModel
+        
+        + getLoanEligibilityRules(): String
+        + getLoanEligibilityBaseModel(): Model
+        + getLoanEligibilityInfModel(): InfModel
+        + getLoanEligibilityBaseModelSecondType(): Model
+        + getLoanEligibilityInfModelSecondType(): InfModel
+    }
+
+    class TypeMapper {
+        + getInstance(): TypeMapper
+        + getTypeByName(String name): RDFDatatype
+    }
+
+    class RDFDatatype
+    class InfModel
+    class Model
+    class Property
+    class Resource
+    class RDFNode
+    class Statement
+    class StmtIterator
+    class Literal
+
+    ExplanationRunner --> Explainer
+    ExplanationRunner --> ModelFactory
+    ExplanationRunner --> TypeMapper
+    Explainer --> Model
+    Explainer --> Property
+    Explainer --> Resource
+    Explainer --> Statement
+    ModelFactory --> Model
+    ModelFactory --> InfModel
+    ModelFactory --> String
+    TypeMapper --> RDFDatatype
+    InfModel --> Resource
+    InfModel --> Property
+    StmtIterator --> Statement
+    Statement --> RDFNode
+    Resource --> Literal
+
+}
+@enduml

@@ -1,43 +1,82 @@
-@startuml Trace-Based_Explanation_Test_Transitive
+@startuml Trace-Based Explanation - Transitive Test
 
 actor User
 participant "ExplanationRunner" as ER
 participant "Explainer" as E
 participant "ModelFactory" as MF
 
+User -> ER: run()
+
 group Trace-Based Explanation Test
-    User -> ER: runTraceBasedExplanationTest()
+    
+    activate ER
+
+    ER -> ER: runExplanationTest(\n"transitive", "trace-based")
+
+    activate ER
+
+    ER -> ER: runTraceBasedExplanationTest()
+
     activate ER
 
     ER -> E: Create explainer
     activate E
+    E --> ER
 
+    ER -> E: Load model into explainer
+    
     E -> MF: getTransitiveBaseModel()
     activate MF
     E <-- MF: return TransitiveBaseModel
     deactivate MF
-
-    E -> E: Load rules into Explainer rules
-      
-      E -> E: GetFullTracedBaseExplanation()
-      activate E
-        
-        E -> E: generateInfModel(TransitiveBaseModel)
-        activate E
     
-        E -> E: Creates generic rule reasoner (Jena function) \nand returns as part of Inference Model
+    E --> ER
+    ER -> E: Load rules into Explainer
+    E --> ER
+    
+    ER -> E: Develop trace-based \nexplanation with explainer
+    
+      E -> E: GetFullTracedBasedExplanation(subj, prop, obj)
+      activate E
+
+        E -> E: generateInfModel(TransitiveBaseModel)
+        note right
+          Utilizes built-in Jena functions
+          to create inf model
+        end note
+        activate E
+        
+        E -> E: Creates generic rule reasoner with explainer rules
+    
+        E -> E: Creates inference model with generic \nrule reasoner and base Model
+        
+        E --> E: Return inference model
         deactivate E
 
-        E -> E: generateTraceBasedExplanation(TransitiveBaseModel, \nInference Model, Triple)
+        E -> E: generateTraceBasedExplanation(TransitiveBaseModel, \nInference Model, subj, prop, obj)
         activate E
     
-        E -> E: Lists all statements from Inference Model
+        E -> E: List all statements from Inference Model that \nhave subj, prop, obj (including wildcards)
   
-        loop For each statement (triple?)
-            E -> E: traceDerivation()
+        loop For each statement (subj, prop, obj)
+            E -> E: traceDerivation(inference model, \nbase model, statement, tabs)
+            note right
+              Recursive function that traces 
+              through infModel to determine 
+              how the statement was generated 
+              by a reasoner, if at all.
+            end note
             activate E
             
-            E -> E: Returns derivation for statement (Jena functions)
+            E -> E: Retrieves derivations of the statement \nusing Jena getDerivation(statement) in the \nform of set(s) of rules/matches that infer the statement
+
+            loop For each derivation
+              E -> E: Extracts each match in the form of a concluded \ntriple and rule(s) that led to the conclusion
+            
+              loop For each match
+                E -> E: Adds rule to the explanation and determines if the rule was in the base \nmodel or inferred from the reasoner. If inferred from the reasoner, then \nthe traceDerivation() is called to derive how the reasoner concluded that rule
+              end loop
+            end loop
             
             E -> E: Appends derivation for statement to traceResponse
             deactivate E
@@ -46,11 +85,17 @@ group Trace-Based Explanation Test
     
       deactivate E
 
-    E -> ER: return traceResponse
-    deactivate E
+    E --> ER: return traceResponse
 
-    ER -> User: print traceResponse
+    deactivate E
+   
+
     deactivate ER
+    deactivate ER
+
+    ER --> User: print traceResponse
+    deactivate ER
+
 end group
 
 @enduml

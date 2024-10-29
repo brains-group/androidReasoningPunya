@@ -295,36 +295,79 @@ public class ExplanationRunner {
 //        print(results);
 //    }
 
+    public static void runExplanationTest(String test, String explanation) {
+        if (test.equals("transitive")) {
+            if (explanation.equals("trace-based")) {
+                runTraceBasedExplanationTest();
+            } else if (explanation.equals("contextual")) {
+                runContextualExplanationTest();
+            } else if (explanation.equals("counterfactual")) {
+                runCounterfactualExplanationTest();
+            } else {
+                System.out.println("Invalid explanation: " + explanation);
+            }
+        } else if (test.equals("aime")) {
+            if (explanation.equals("trace-based")) {
+                runTraceBasedExplanationTestAIME();
+            } else if (explanation.equals("contextual")) {
+                runContextualExplanationTestAIME();
+            } else if (explanation.equals("counterfactual")) {
+                runCounterfactualExplanationTestAIME();
+            } else {
+                System.out.println("Invalid explanation: " + explanation);
+            }
+        } else if (test.equals("loan-eligibility")) {
+            if (explanation.equals("trace-based")) {
+                runTraceBasedExplanationTestLoanEligibility();
+            } else if (explanation.equals("counterfactual")) {
+                runCounterfactualExplanationTestLoanEligibility();
+            } else {
+                System.out.println("Invalid explanation: " + explanation);
+            }
+        } else {
+            System.out.println("Invalid test: " + test);
+        }
+    }
+
+
     public static void run () {
         // Create model...
         PrintUtil.registerPrefix("ex", ModelFactory.getGlobalURI());
 
         // Models and Rules
-        print("Transitive Base Model & Rules:");
-        print(ModelFactory.getTransitiveBaseModel().toString());
-        print("[transitiveRule: (?a ex:equals ?b) (?b ex:equals ?c) -> (?a ex:equals ?c)]");
-        print("AIME Base Model & Rules & Inf Model:");
-        print(ModelFactory.getAIMEBaseModel().toString());
-        print(ModelFactory.getAIMERules());
-        print(ModelFactory.getAIMEInfModel().toString());
-        print("Loan Eligibility Base Model & Rules & Inf Model:");
-        print(ModelFactory.getLoanEligibilityBaseModel().toString());
-        print(ModelFactory.getLoanEligibilityRules());
-        print(ModelFactory.getLoanEligibilityInfModel().toString());
+//        print("Transitive Base Model & Rules:");
+//        print(ModelFactory.getTransitiveBaseModel().toString());
+//        print("[transitiveRule: (?a ex:equals ?b) (?b ex:equals ?c) -> (?a ex:equals ?c)]");
+//        print("AIME Base Model & Rules & Inf Model:");
+//        print(ModelFactory.getAIMEBaseModel().toString());
+//        print(ModelFactory.getAIMERules());
+//        print(ModelFactory.getAIMEInfModel().toString());
+//        print("Loan Eligibility Base Model & Rules & Inf Model:");
+//        print(ModelFactory.getLoanEligibilityBaseModel().toString());
+//        print(ModelFactory.getLoanEligibilityRules());
+//        print(ModelFactory.getLoanEligibilityInfModel().toString());
 
         // Trace-Based Explanations
-        runTraceBasedExplanationTest();
-        runTraceBasedExplanationTestAIME();
-        runTraceBasedExplanationTestLoanEligibility();
+//        runExplanationTest("transitive", "trace-based");
+//        runExplanationTest("aime", "trace-based");
+//        runExplanationTest("loan-eligibility", "trace-based");
+        // runTraceBasedExplanationTest();
+        // runTraceBasedExplanationTestAIME();
+        // runTraceBasedExplanationTestLoanEligibility();
 
         // Contextual Explanations
-        runContextualExplanationTest();
-        runContextualExplanationTestAIME();
+//        runExplanationTest("transitive", "contextual");
+//        runExplanationTest("aime", "contextual");
+        // runContextualExplanationTest();
+        // runContextualExplanationTestAIME();
 
         // Counterfactual Explanations
-        runCounterfactualExplanationTest();
-        runCounterfactualExplanationTestAIME();
-        runCounterfactualExplanationTestLoanEligibility();
+        runExplanationTest("transitive", "counterfactual");
+//        runExplanationTest("aime", "counterfactual");
+//        runExplanationTest("loan-eligibility", "counterfactual");
+        // runCounterfactualExplanationTest();
+        // runCounterfactualExplanationTestAIME();
+        // runCounterfactualExplanationTestLoanEligibility();
 
         // Contrastive Explanations
         // runContrastiveExplanationTestAIME();
