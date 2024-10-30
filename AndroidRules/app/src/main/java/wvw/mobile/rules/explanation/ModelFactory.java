@@ -15,10 +15,13 @@ import com.hp.hpl.jena.reasoner.rulesys.Rule;
 import com.hp.hpl.jena.reasoner.Reasoner;
 import com.hp.hpl.jena.util.PrintUtil;
 import com.hp.hpl.jena.vocabulary.RDF;
+
 import android.content.Context;
 import java.io.BufferedReader;
-import java.io.InputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.InputStream;
+
 import android.content.res.AssetManager;
 
 
@@ -231,46 +234,6 @@ public class ModelFactory {
         return model;
     }
 
-//    public static String getAIMERules() {
-//        String rule1 = "[rule1: ";
-//        rule1 += "( ?var schema:weight ?weight ) ";
-//        rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
-//        rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
-//        rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
-//        rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
-//        rule1 += "-> (?var ex:sugars ?sugars)";
-//        rule1 += "]";
-//        String rule2 = "[rule2: ";
-//        rule2 += "( ?user rdf:type foaf:Person) ";
-//        rule2 += "( ?user ex:ate ?food) ";
-//        rule2 += "( ?food ex:sugars ?sugar) ";
-//        rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
-//        rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
-//        rule2 += "]";
-//
-//        return rule1 + " " + rule2;
-//    }
-
-//     public static String getAIMERules() {
-//         String rule1 = "[rule1: ";
-//         rule1 += "( ?var schema:weight ?weight ) ";
-//         rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
-//         rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
-//         rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
-//         rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
-//         rule1 += "-> (?var ex:sugars ?sugars)";
-//         rule1 += "]";
-//
-//         String rule2 = "[rule2: ";
-//         rule2 += "( ?user rdf:type foaf:Person) ";
-//         rule2 += "( ?user ex:ate ?food) ";
-//         rule2 += "( ?food ex:sugars ?sugar) ";
-//         rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
-//         rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
-//         rule2 += "]";
-//
-//         return rule1 + " " + rule2;
-//     }
 
     public static String getAIMERules() {
         String rule1 = "[rule1: ";
@@ -292,74 +255,33 @@ public class ModelFactory {
         return rule1 + " " + rule2;
     }
 
+    public static String getAIMERulesPrefix() {
+        // Define prefixes as constants to avoid errors
+        String schemaPrefix = "http://schema.org/";
+        String usdaPrefix = "http://example.com/usda#";
+        String exPrefix = "http://example.com/ex#";
+        String rdfPrefix = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+        String foafPrefix = "http://xmlns.com/foaf/0.1/";
 
-//    public static String getAIMERules() {
-//        // Declare the necessary prefixes for the rule
-//        StringBuilder rules = new StringBuilder();
-//
-//        rules.append("[prefix schema: <http://schema.org/> ");
-//        rules.append("prefix usda: <http://usda.gov/> ");
-//        rules.append("prefix ex: <http://example.com/> ");
-//        rules.append("prefix foaf: <http://xmlns.com/foaf/0.1/>] ");
-//
-//        // Define only the rules without prefixes
-//        String rule1 = "[rule1: ";
-//        rule1 += "( ?var schema:weight ?weight ) ";
-//        rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
-//        rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
-//        rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
-//        rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
-//        rule1 += "-> (?var ex:sugars ?sugars) ";
-//        rule1 += "]";
-//
-//        String rule2 = "[rule2: ";
-//        rule2 += "( ?user rdf:type foaf:Person) ";
-//        rule2 += "( ?user ex:ate ?food) ";
-//        rule2 += "( ?food ex:sugars ?sugar) ";
-//        rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
-//        rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
-//        rule2 += "]";
-//
-//        // Return only the rules, including the prefixes
-//        return rules.toString() + rule1 + " " + rule2;
-//    }
+        String rule1 = "[rule1: ";
+        rule1 += "( ?var " + schemaPrefix + "weight ?weight ) ";
+        rule1 += "( ?var " + schemaPrefix + "variableMeasured ?foodstuff ) ";
+        rule1 += "( ?foodstuff " + usdaPrefix + "sugar ?sugarsPer100g ) ";
+        rule1 += "quotient(?weight, '100.0'^^xsd:float, ?scaledWeight) ";
+        rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
+        rule1 += "-> (?var " + exPrefix + "sugars ?sugars)";
+        rule1 += "]";
 
+        String rule2 = "[rule2: ";
+        rule2 += "( ?user " + rdfPrefix + "type " + foafPrefix + "Person) ";
+        rule2 += "( ?user " + exPrefix + "ate ?food) ";
+        rule2 += "( ?food " + exPrefix + "sugars ?sugar) ";
+        rule2 += "sum(?sugar, '0.0'^^xsd:float, ?totalSugars) ";
+        rule2 += "-> ( ?user " + exPrefix + "totalSugars ?totalSugars ) ";
+        rule2 += "]";
 
-//    public static String getAIMERules() {
-//        StringBuilder rules = new StringBuilder();
-//
-//        try {
-//            // Read all lines from the file and concatenate them into a single string
-//            for (String line : Files.readAllLines(Paths.get("rules/aime_rules.rules"))) {
-//                rules.append(line).append(" ");
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        return rules.toString();
-//    }
-
-//    public static String getAIMERules(Context context) {
-//        StringBuilder rules = new StringBuilder();
-//
-//        try {
-//            // Open the rules file from the assets folder
-//            InputStream is = context.getAssets().open("rules/aime_rules.rules");
-//            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-//
-//            String line;
-//            while ((line = reader.readLine()) != null) {
-//                rules.append(line).append(" ");
-//            }
-//
-//            reader.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        return rules.toString();
-//    }
+        return rule1 + " " + rule2;
+    }
 
     public static String getLoanEligibilityRules() {
         String rule1 = "[rule1: ";

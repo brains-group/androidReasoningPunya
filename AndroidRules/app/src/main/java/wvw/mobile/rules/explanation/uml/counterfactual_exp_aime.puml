@@ -1,4 +1,5 @@
-@startuml
+@startuml Counterfactual Explanation Test
+
 actor User
 participant "ExplanationRunner" as ER
 participant "Explainer" as E
@@ -10,7 +11,7 @@ group Counterfactual Explanation Test
     
     activate ER
 
-    ER -> ER: runExplanationTest(\n"aime", "counterfactual")
+    ER -> ER: runExplanationTest("aime", "counterfactual")
 
     activate ER
 
@@ -26,6 +27,10 @@ group Counterfactual Explanation Test
     
     E -> MF: getAIMEBaseModel()
     activate MF
+    note right
+      Apple Model - Observes 
+      user eating apple
+    end note
     E <-- MF: return AIMEBaseModel
     deactivate MF
     
@@ -43,34 +48,41 @@ group Counterfactual Explanation Test
     
     E --> ER
     
+    ER -> E: Create infModel for baseModel
+    
     E -> E: generateInfModel(baseModel)
     note right
-      Utilizes built-in Jena functions
-      to create inf model
+      Utilizes built-in Jena functions to create inf model
     end note
     activate E
     
     E -> E: Creates generic rule reasoner with explainer rules
 
-    E -> E: Create inference model with generic \nrule reasoner and baseModel
+    E -> E: Create inference model with generic rule reasoner and baseModel
     
     E --> E: Return inference model
     deactivate E
+    
+    E --> ER
         
     ER -> ER: List all statements from infModel that \nhave subj, prop, obj (including wildcards)
     
-    ER -> E: Retrieve other baseModel
+    ER -> E: Retrieve otherBaseModel
     
     E -> MF: getAIMEBaseModelBanana()
     activate MF
+    note right
+      Banana Model - Observes
+      user eating banana
+    end note
     E <-- MF: return AIMEBaseModelBanana
     deactivate MF
     
     E --> ER
     
     loop For each statement (subj, prop, obj)
-        ER -> E: Develop counterfactual explanation \nwith explainer and other baseModel
-        E -> E: GetFullCounterfactualExplanation_B(\nstatement, otherBaseModel)
+        ER -> E: Develop counterfactual explanation \nwith explainer and otherBaseModel
+        E -> E: GetFullCounterfactualExplanation_B(statement, otherBaseModel)
       activate E
         E -> E: generateInfModel(baseModel)
         note right
@@ -81,9 +93,9 @@ group Counterfactual Explanation Test
         
         E -> E: Creates generic rule reasoner with explainer rules
     
-        E -> E: Create inference model with generic \nrule reasoner and baseModel
+        E -> E: Create thisInfModel with generic rule reasoner and baseModel
         
-        E --> E: Return inference model
+        E --> E: Return thisInfModel
         deactivate E
         
         E -> E: generateInfModel(otherBaseModel)
@@ -95,20 +107,63 @@ group Counterfactual Explanation Test
         
         E -> E: Creates generic rule reasoner with explainer rules
     
-        E -> E: Create inference model with generic \nrule reasoner and otherBaseModel
+        E -> E: Create otherInfModel with generic rule reasoner and otherBaseModel
         
-        E --> E: Return inference model
+        E --> E: Return otherInfModel
         deactivate E
         
+        E -> E: List all statements from thisInfModel and otherInfModel \nthat have the statement's subj, prop, and wildcard object
+
+        E -> E: Retrieves derivations (reasoning chain) of the statement using Jena \ngetDerivation(statement) in the form of set(s) of rules/matches \nthat infer the statement from thisInfModel and otherInfModel
+
+        loop For each derivation from thisInfModel
         
+          note right
+            Derivation 
+            comparison
+          end note
         
+          alt Matching derivation in thisInfModel and otherInfModel
+              E -> E: Derivation from otherInfModel is stored in otherDerivation
+          else Partial matching statement in thisInfModel and otherInfModel (same subj, pred, but not obj)
+              E -> E: Derivation from otherInfModel is updated to the partial matching statement
+          end
+          
+          alt Different Conclusions: otherDerivation is null, only thisInfModel concludes the statement
+              E -> E: Add's thisBaseModel's conclusion to the results
+          else Same Conclusion: Both models have same conclusion
+              E -> E: Extracts each match in the form of a concluded triple and rule(s) that led to the conclusion
+              loop For each match (statement)
+                E -> E: GetFullCounterfactualExplanation_B(match statement, otherBaseModel)
+              end loop
+              note right
+                Further explanation 
+                on each macthed 
+                statement/triple
+              end note
+          else Different Statements Derived: Different conclusions
+              E -> E: Extracts each match in the form of a concluded triple and rule(s) that \nled to the conclusion for both thisInfModel and otherInfModel
+              E -> E: Add's diffferent conclusions and their matches to the results
+              loop For each match (statement) that is exclusive to thisInfModel
+                E -> E: GetFullCounterfactualExplanation_B(match statement, otherBaseModel)
+              end loop
+              note right
+                Further explanation 
+                on each macthed 
+                statement/triple
+              end note
+          end
+          
+        end loop
+        
+        E --> ER: Returns full chain of derivations with \nconditional paths of matches and conclusions
         
       deactivate E
     end loop
         
-
-    ER --> User: print traceResponse
+    ER --> User: print result
     deactivate ER
 
 end group
+
 @enduml

@@ -98,34 +98,46 @@ public class ExplanationRunner {
         print(traceResponse);
     }
 
-    public static void runTraceBasedExplanationTestAIME(){
-
+    public static void runTraceBasedExplanationTestAIME() {
         print("Running Trace-Based Explanation Test on AIME...");
 
         // Set up the Explainer
         Explainer explainer = new Explainer();
         print("\tCreated explainer");
-        explainer.Model(ModelFactory.getAIMEBaseModel());
-        print("\tCreated base model");
-        explainer.Rules(ModelFactory.getAIMERules());
+
+        // Set up the Model with namespaces
+        Model model = ModelFactory.getAIMEBaseModel();
+        model.setNsPrefix("schema", "http://schema.org/");
+        model.setNsPrefix("usda", "http://example.com/usda#");
+        model.setNsPrefix("ex", "http://example.com/");
+        model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
+        explainer.Model(model);
+        print("\tCreated base model with namespaces");
+
+        // Set up Rules
+        explainer.Rules(ModelFactory.getAIMERulesPrefix());
         print("\tCreated rules");
-        // explainer.Model().createTypedLiteral( (Double)20.78).getValue();
-        // XSDDatatype xsdDouble = XSDDatatype.XSDdouble;
+
+        // Define the data type for double
         TypeMapper tm = TypeMapper.getInstance();
         RDFDatatype xsdDouble = tm.getTypeByName("http://www.w3.org/2001/XMLSchema#double");
         print("\tDefined data types");
 
-        // Demonstrate a trace-based explanation.
-        String traceResponse = explainer.GetFullTracedBaseExplanation_B(
-                explainer.Model().getResource("http://xmlns.com/foaf/0.1/Person"),
-                explainer.Model().getProperty("http://example.com/totalSugars"),
-                // null,
-                // explainer.Model().getResource("20.78^^http://www.w3.org/2001/XMLSchema#double"));
-                // explainer.Model().getResource( explainer.Model().createTypedLiteral( "20.78", RDFDatatype ).getString() ) );
-                ResourceFactory.createTypedLiteral("20.78", xsdDouble));
-                // null);
+        // Demonstrate a trace-based explanation
+        String traceResponse;
+        try {
+            traceResponse = explainer.GetFullTracedBaseExplanation_B(
+                    explainer.Model().getResource("http://xmlns.com/foaf/0.1/Person"),
+                    explainer.Model().getProperty("http://example.com/totalSugars"),
+                    ResourceFactory.createTypedLiteral("20.78", xsdDouble)
+            );
+        } catch (Exception e) {
+            traceResponse = "Error generating explanation: " + e.getMessage();
+            Log.e("TraceExplanation", "Error", e);
+        }
         print(traceResponse);
     }
+
 
 
     public static void runTraceBasedExplanationTestLoanEligibility() {
@@ -297,11 +309,11 @@ public class ExplanationRunner {
 
     public static void runExplanationTest(String test, String explanation) {
         if (test.equals("transitive")) {
-            if (explanation.equals("trace-based")) {
+            if (explanation.equals("trace-based")) { // RUNS
                 runTraceBasedExplanationTest();
-            } else if (explanation.equals("contextual")) {
+            } else if (explanation.equals("contextual")) { // RUNS
                 runContextualExplanationTest();
-            } else if (explanation.equals("counterfactual")) {
+            } else if (explanation.equals("counterfactual")) { // RUNS
                 runCounterfactualExplanationTest(); // INCORRECT: Runs an AIME test
             } else {
                 System.out.println("Invalid explanation: " + explanation);
@@ -311,7 +323,7 @@ public class ExplanationRunner {
                 runTraceBasedExplanationTestAIME();
             } else if (explanation.equals("contextual")) {
                 runContextualExplanationTestAIME();
-            } else if (explanation.equals("counterfactual")) {
+            } else if (explanation.equals("counterfactual")) { // RUNS
                 runCounterfactualExplanationTestAIME();
             } else {
                 System.out.println("Invalid explanation: " + explanation);
@@ -348,15 +360,15 @@ public class ExplanationRunner {
 //        print(ModelFactory.getLoanEligibilityInfModel().toString());
 
         // Trace-Based Explanations
-//        runExplanationTest("transitive", "trace-based");
-//        runExplanationTest("aime", "trace-based");
-//        runExplanationTest("loan-eligibility", "trace-based");
+        runExplanationTest("transitive", "trace-based");
+        runExplanationTest("aime", "trace-based");
+        runExplanationTest("loan-eligibility", "trace-based");
         // runTraceBasedExplanationTest();
         // runTraceBasedExplanationTestAIME();
         // runTraceBasedExplanationTestLoanEligibility();
 
         // Contextual Explanations
-//        runExplanationTest("transitive", "contextual");
+        runExplanationTest("transitive", "contextual");
 //        runExplanationTest("aime", "contextual");
         // runContextualExplanationTest();
         // runContextualExplanationTestAIME();
@@ -364,7 +376,7 @@ public class ExplanationRunner {
         // Counterfactual Explanations
         runExplanationTest("transitive", "counterfactual");
         runExplanationTest("aime", "counterfactual");
-//        runExplanationTest("loan-eligibility", "counterfactual");
+        runExplanationTest("loan-eligibility", "counterfactual");
         // runCounterfactualExplanationTest();
         // runCounterfactualExplanationTestAIME();
         // runCounterfactualExplanationTestLoanEligibility();
