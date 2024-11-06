@@ -29,7 +29,7 @@ public class ModelFactory {
     // Global URI
     private static String ex  = "http://example.com/";
 
-    // Related to AIME Tutorial and Loan Eligibility Model
+    // Related to FoodRecommendation Tutorial and Loan Eligibility Model
     private static String rdfURI = RDF.getURI();
     private static String schemaURI = "http://schema.org/";
     private static String ateURI      = ex + "ate";
@@ -101,8 +101,8 @@ public class ModelFactory {
         return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, model);
     }
 
-    public static Model getAIMEBaseModel() {
-        // Creating the model used in AIME tutorial with Person, Observe:eat usda:Apple
+    public static Model getFoodRecommendationBaseModel() {
+        // Creating the model used in FoodRecommendation tutorial with Person, Observe:eat usda:Apple
         Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
 
         // Create the resources
@@ -235,7 +235,7 @@ public class ModelFactory {
     }
 
 
-    public static String getAIMERules() {
+    public static String getFoodRecommendationRules() {
         String rule1 = "[rule1: ";
         rule1 += "( ?var schema:weight ?weight ) ";
         rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
@@ -255,7 +255,7 @@ public class ModelFactory {
         return rule1 + " " + rule2;
     }
 
-    public static String getAIMERulesPrefix() {
+    public static String getFoodRecommendationRulesPrefix() {
         // Define prefixes as constants to avoid errors
         String schemaPrefix = "http://schema.org/";
         String usdaPrefix = "http://example.com/usda#";
@@ -311,10 +311,10 @@ public class ModelFactory {
     }
 
 
-    public static InfModel getAIMEInfModel() {
-        Model baseModel = getAIMEBaseModel();
+    public static InfModel getFoodRecommendationInfModel() {
+        Model baseModel = getFoodRecommendationBaseModel();
 
-        // Create the ruleset from AIME tutorial
+        // Create the ruleset from FoodRecommendation tutorial
         PrintUtil.registerPrefix("schema", schemaURI);
         PrintUtil.registerPrefix("usda", usdaURI);
         PrintUtil.registerPrefix("rdf", rdfURI);
@@ -390,8 +390,8 @@ public class ModelFactory {
     }
 
 
-    public static Model getAIMEBaseModelBanana() {
-        // creating the model used in AIME tutorial with Person, Observe:eat usda:Apple
+    public static Model getFoodRecommendationBaseModelBanana() {
+        // creating the model used in FoodRecommendation tutorial with Person, Observe:eat usda:Apple
         Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
 
         // create the resource
@@ -460,10 +460,10 @@ public class ModelFactory {
     }
 
 
-    public static InfModel getAIMEInfModelBanana() {
-        Model baseModel = getAIMEBaseModelBanana();
+    public static InfModel getFoodRecommendationInfModelBanana() {
+        Model baseModel = getFoodRecommendationBaseModelBanana();
 
-        // Create the ruleset from AIME tutorial
+        // Create the ruleset from FoodRecommendation tutorial
         PrintUtil.registerPrefix("schema", schemaURI);
         PrintUtil.registerPrefix("usda", usdaURI);
         PrintUtil.registerPrefix("rdf", rdfURI);

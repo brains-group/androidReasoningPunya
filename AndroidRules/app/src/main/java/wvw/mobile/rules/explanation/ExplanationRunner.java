@@ -63,11 +63,11 @@ public class ExplanationRunner {
 
         // Set-up the Explainer
         Explainer explainer2 = new Explainer();
-        explainer2.Model(ModelFactory.getAIMEBaseModel());
-        explainer2.Rules(ModelFactory.getAIMERules());
+        explainer2.Model(ModelFactory.getFoodRecommendationBaseModel());
+        explainer2.Rules(ModelFactory.getFoodRecommendationRules());
 
         // Set-up the Additional Model needed to run the counterfactual explanation
-        InfModel infModel = ModelFactory.getAIMEInfModel();
+        InfModel infModel = ModelFactory.getFoodRecommendationInfModel();
 
         Resource person  = infModel.getResource(ModelFactory.getPersonURI());
         Property totalSugars = infModel.getProperty("http://example.com/totalSugars");
@@ -75,10 +75,10 @@ public class ExplanationRunner {
         StmtIterator itr = infModel.listStatements(person, totalSugars, (RDFNode) null);
 
         // Use the Explainer to generate a counterfactual explanation.
-        String res = "AIME_Explainer -- CounterfactualExplanation\n";
+        String res = "FoodRecommendation_Explainer -- CounterfactualExplanation\n";
         while(itr.hasNext()) {
             Statement s = itr.next();
-            res += explainer2.GetFullCounterfactualExplanation(s, ModelFactory.getAIMEBaseModelBanana());
+            res += explainer2.GetFullCounterfactualExplanation(s, ModelFactory.getFoodRecommendationBaseModelBanana());
         }
         print(res);
     }
@@ -98,15 +98,15 @@ public class ExplanationRunner {
         print(traceResponse);
     }
 
-    public static void runTraceBasedExplanationTestAIME() {
-        print("Running Trace-Based Explanation Test on AIME...");
+    public static void runTraceBasedExplanationTestFoodRecommendation() {
+        print("Running Trace-Based Explanation Test on FoodRecommendation...");
 
         // Set up the Explainer
         Explainer explainer = new Explainer();
         print("\tCreated explainer");
 
         // Set up the Model with namespaces
-        Model model = ModelFactory.getAIMEBaseModel();
+        Model model = ModelFactory.getFoodRecommendationBaseModel();
         model.setNsPrefix("schema", "http://schema.org/");
         model.setNsPrefix("usda", "http://example.com/usda#");
         model.setNsPrefix("ex", "http://example.com/");
@@ -115,7 +115,7 @@ public class ExplanationRunner {
         print("\tCreated base model with namespaces");
 
         // Set up Rules
-        explainer.Rules(ModelFactory.getAIMERulesPrefix());
+        explainer.Rules(ModelFactory.getFoodRecommendationRulesPrefix());
         print("\tCreated rules");
 
         // Define the data type for double
@@ -175,20 +175,20 @@ public class ExplanationRunner {
     }
 
 
-    public static void runContextualExplanationTestAIME(){
+    public static void runContextualExplanationTestFoodRecommendation(){
 
-        print("Running Contextual Explanation Test on AIME...");
+        print("Running Contextual Explanation Test on FoodRecommendation...");
 
         // Create and set-up the Explainer
         Explainer explainer = new Explainer();
-        explainer.Model(ModelFactory.getAIMEBaseModel());
-        explainer.Rules(ModelFactory.getAIMERules());
+        explainer.Model(ModelFactory.getFoodRecommendationBaseModel());
+        explainer.Rules(ModelFactory.getFoodRecommendationRules());
 
         TypeMapper tm = TypeMapper.getInstance();
         RDFDatatype xsdDouble = tm.getTypeByName("http://www.w3.org/2001/XMLSchema#double");
 
         // Generate the contextual explanation.
-        String results = "AIME_Explainer -- ContextualExplanation\n";
+        String results = "FoodRecommendation_Explainer -- ContextualExplanation\n";
         results += explainer.GetShallowContextualExplanation(
                 explainer.Model().getResource("http://xmlns.com/foaf/0.1/Person"),
                 explainer.Model().getProperty("http://example.com/totalSugars"),
@@ -210,17 +210,17 @@ public class ExplanationRunner {
         // TODO: Figure out why this isn't working
     }
 
-    public static void runCounterfactualExplanationTestAIME(){
+    public static void runCounterfactualExplanationTestFoodRecommendation(){
 
-        print("Running Counterfactual Explanation Test on AIME...");
+        print("Running Counterfactual Explanation Test on FoodRecommendation...");
 
         // Set-up the Explainer
         Explainer explainer2 = new Explainer();
-        explainer2.Model(ModelFactory.getAIMEBaseModel());
-        explainer2.Rules(ModelFactory.getAIMERules());
+        explainer2.Model(ModelFactory.getFoodRecommendationBaseModel());
+        explainer2.Rules(ModelFactory.getFoodRecommendationRules());
 
         // Set-up the Additional Model needed to run the counterfactual explanation
-        InfModel infModel = ModelFactory.getAIMEInfModel();
+        InfModel infModel = ModelFactory.getFoodRecommendationInfModel();
 
         Resource person  = infModel.getResource(ModelFactory.getPersonURI());
         Property totalSugars = infModel.getProperty("http://example.com/totalSugars");
@@ -228,10 +228,10 @@ public class ExplanationRunner {
         StmtIterator itr = infModel.listStatements(person, totalSugars, (RDFNode) null);
 
         // Use the Explainer to generate a counterfactual explanation.
-        String result = "AIME_Explainer -- CounterfactualExplanation\n";
+        String result = "FoodRecommendation_Explainer -- CounterfactualExplanation\n";
         while(itr.hasNext()) {
             Statement s = itr.next();
-            result += explainer2.GetFullCounterfactualExplanation_B(s, ModelFactory.getAIMEBaseModelBanana());
+            result += explainer2.GetFullCounterfactualExplanation_B(s, ModelFactory.getFoodRecommendationBaseModelBanana());
         }
         print(result);
     }
@@ -263,17 +263,17 @@ public class ExplanationRunner {
         System.out.println(result);
     }
 
-//    public static void runContrastiveExplanationTestAIME() {
+//    public static void runContrastiveExplanationTestFoodRecommendation() {
 //
-//        print("Running Contrastive Explanation Test on AIME...");
+//        print("Running Contrastive Explanation Test on FoodRecommendation...");
 //
 //        // Set-up the Explainer
 //        Explainer explainer = new Explainer();
-//        explainer.Model(ModelFactory.getAIMEBaseModel());  // Set model
-//        explainer.Rules(ModelFactory.getAIMERules());      // Set rules
+//        explainer.Model(ModelFactory.getFoodRecommendationBaseModel());  // Set model
+//        explainer.Rules(ModelFactory.getFoodRecommendationRules());      // Set rules
 //
 //        // Set-up the Additional Model needed to run the contrastive explanation
-//        InfModel infModel = ModelFactory.getAIMEInfModel();
+//        InfModel infModel = ModelFactory.getFoodRecommendationInfModel();
 //
 //        // Define resources and properties involved in the explanation
 //        Resource person = infModel.getResource(ModelFactory.getPersonURI());
@@ -283,17 +283,17 @@ public class ExplanationRunner {
 //        StmtIterator factualIterator = infModel.listStatements(person, totalSugars, (RDFNode) null);
 //
 //        // Assume we want to contrast it with a hypothetical scenario where the person ate less sugar
-//        Model contrastiveModel = ModelFactory.getAIMEBaseModelWithLessSugar();
+//        Model contrastiveModel = ModelFactory.getFoodRecommendationBaseModelWithLessSugar();
 //
 //        // Create a string to store the results of the contrastive explanation
-//        String results = "AIME_Explainer -- ContrastiveExplanation\n";
+//        String results = "FoodRecommendation_Explainer -- ContrastiveExplanation\n";
 //
 //        // Iterate over the factual statements and generate contrastive explanations
 //        while (factualIterator.hasNext()) {
 //            Statement factualStatement = factualIterator.next();
 //
 //            // Generate the factual explanation
-//            String factualExplanation = explainer.GetFullFactualExplanation(factualStatement, ModelFactory.getAIMEBaseModelBanana());
+//            String factualExplanation = explainer.GetFullFactualExplanation(factualStatement, ModelFactory.getFoodRecommendationBaseModelBanana());
 //
 //            // Generate the contrastive explanation by comparing with a hypothetical scenario
 //            String contrastiveExplanation = explainer.GetContrastiveExplanation(factualStatement, contrastiveModel);
@@ -314,17 +314,17 @@ public class ExplanationRunner {
             } else if (explanation.equals("contextual")) { // RUNS
                 runContextualExplanationTest();
             } else if (explanation.equals("counterfactual")) { // RUNS
-                runCounterfactualExplanationTest(); // INCORRECT: Runs an AIME test
+                runCounterfactualExplanationTest(); // INCORRECT: Runs an FoodRecommendation test
             } else {
                 System.out.println("Invalid explanation: " + explanation);
             }
-        } else if (test.equals("aime")) {
+        } else if (test.equals("food-recommendation")) {
             if (explanation.equals("trace-based")) {
-                runTraceBasedExplanationTestAIME();
+                runTraceBasedExplanationTestFoodRecommendation();
             } else if (explanation.equals("contextual")) {
-                runContextualExplanationTestAIME();
+                runContextualExplanationTestFoodRecommendation();
             } else if (explanation.equals("counterfactual")) { // RUNS
-                runCounterfactualExplanationTestAIME();
+                runCounterfactualExplanationTestFoodRecommendation();
             } else {
                 System.out.println("Invalid explanation: " + explanation);
             }
@@ -350,10 +350,10 @@ public class ExplanationRunner {
 //        print("Transitive Base Model & Rules:");
 //        print(ModelFactory.getTransitiveBaseModel().toString());
 //        print("[transitiveRule: (?a ex:equals ?b) (?b ex:equals ?c) -> (?a ex:equals ?c)]");
-//        print("AIME Base Model & Rules & Inf Model:");
-//        print(ModelFactory.getAIMEBaseModel().toString());
-//        print(ModelFactory.getAIMERules());
-//        print(ModelFactory.getAIMEInfModel().toString());
+//        print("FoodRecommendation Base Model & Rules & Inf Model:");
+//        print(ModelFactory.getFoodRecommendationBaseModel().toString());
+//        print(ModelFactory.getFoodRecommendationRules());
+//        print(ModelFactory.getFoodRecommendationInfModel().toString());
 //        print("Loan Eligibility Base Model & Rules & Inf Model:");
 //        print(ModelFactory.getLoanEligibilityBaseModel().toString());
 //        print(ModelFactory.getLoanEligibilityRules());
@@ -361,27 +361,27 @@ public class ExplanationRunner {
 
         // Trace-Based Explanations
         runExplanationTest("transitive", "trace-based");
-        runExplanationTest("aime", "trace-based");
+        runExplanationTest("food-recommendation", "trace-based");
         runExplanationTest("loan-eligibility", "trace-based");
         // runTraceBasedExplanationTest();
-        // runTraceBasedExplanationTestAIME();
+        // runTraceBasedExplanationTestFoodRecommendation();
         // runTraceBasedExplanationTestLoanEligibility();
 
         // Contextual Explanations
         runExplanationTest("transitive", "contextual");
-//        runExplanationTest("aime", "contextual");
+//        runExplanationTest("FoodRecommendation", "contextual");
         // runContextualExplanationTest();
-        // runContextualExplanationTestAIME();
+        // runContextualExplanationTestFoodRecommendation();
 
         // Counterfactual Explanations
         runExplanationTest("transitive", "counterfactual");
-        runExplanationTest("aime", "counterfactual");
+        runExplanationTest("food-recommendation", "counterfactual");
         runExplanationTest("loan-eligibility", "counterfactual");
         // runCounterfactualExplanationTest();
-        // runCounterfactualExplanationTestAIME();
+        // runCounterfactualExplanationTestFoodRecommendation();
         // runCounterfactualExplanationTestLoanEligibility();
 
         // Contrastive Explanations
-        // runContrastiveExplanationTestAIME();
+        // runContrastiveExplanationTestFoodRecommendation();
     }
 }
