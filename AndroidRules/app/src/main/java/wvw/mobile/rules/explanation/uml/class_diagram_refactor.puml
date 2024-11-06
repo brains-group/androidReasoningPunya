@@ -1,0 +1,190 @@
+@startuml Explanation System
+
+package "wvw_mobile_rules_explanation" {
+    ' Base Classes and Interfaces
+    interface Explanation {
+        + explain(ExplanationContext context): String
+    }
+
+    ' Enums
+    enum ExplanationType {
+        TRACE_BASED
+        CONTEXTUAL
+        COUNTERFACTUAL
+        CONTRASTIVE
+    }
+
+    enum ModelType {
+        FOOD_RECOMMENDATION
+        LOAN_ELIGIBILITY
+        TRANSITIVE
+    }
+
+    abstract class RDFModel {
+        # model: Model
+        # rules: String
+        # infModel: InfModel
+        + initialize()
+        # {abstract} createBaseModel(): Model
+        # {abstract} createRules(): String
+        # {abstract} createAlternativeModel(): Model
+        # {abstract} createInfModel(): InfModel
+        + getModel(): Model
+        + getRules(): String
+        + getInfModel(): InfModel
+    }
+
+    ' Model Classes
+    class FoodRecommendationModel extends RDFModel {
+        ' - ATE_URI: String
+        ' - WEIGHT_URI: String
+        ' - USDA_URI: String
+        - URIConstants: String
+        # createBaseModel(): Model
+        # createRules(): String
+        # createAlternativeModel(): Model
+        # createInfModel(): InfModel
+    }
+
+    class LoanEligibilityModel extends RDFModel {
+        ' - INCOME_URI: String
+        ' - DEBT_URI: String
+        ' - CREDIT_SCORE_URI: String
+        - URIConstants: String
+        # createBaseModel(): Model
+        # createRules(): String
+        # createAlternativeModel(): Model
+        # createInfModel(): InfModel
+    }
+
+    class TransitiveModel extends RDFModel {
+        - URIConstants: String
+        # createBaseModel(): Model
+        # createRules(): String
+        # createAlternativeModel(): Model
+        # createInfModel(): InfModel
+    }
+
+    ' Explanation Types
+    class TraceBased implements Explanation {
+        + explain(ExplanationContext context): String
+        - traceDerivation(InfModel inf, Model base, \nStatement stmt, int tabs): String
+        - processMatch(Triple match, Model baseModel, \nInfModel infModel, int tabs): String
+        - createMatchStatement(Triple match): Statement
+        - tabOffset(int tabs): String
+    }
+
+    class Contextual implements Explanation {
+        + explain(ExplanationContext \ncontext): String
+        - getShallowContextualExplanation(\nExplanationContext context): String
+        - getSimpleContextualExplanation(\nExplanationContext context): String
+        - generateShallowTrace(Statement s, \nInfModel model): String
+        - generateSimpleContextualExplanation(\nStatement s, InfModel model): String
+    }
+
+    class Counterfactual implements Explanation {
+        + explain(ExplanationContext context): String
+        - generateCounterfactualExplanation(Statement s, \nExplanationContext context): String
+        - compareDerivations(RuleDerivation \nthisDerivation, RuleDerivation otherDerivation, \nExplanationContext context): String
+        - handleMatchingConclusions(RuleDerivation \nderivation, ExplanationContext context): String
+        - handleDifferentConclusions(RuleDerivation \nthisDerivation, RuleDerivation otherDerivation, \nExplanationContext context): String
+    }
+
+    class Contrastive implements Explanation {
+        + explain(ExplanationContext \ncontext): String
+    }
+
+    ' Support Classes
+    class ExplanationContext {
+        - rdfModel: RDFModel
+        - subject: Resource
+        - predicate: Property
+        - object: RDFNode
+        - alternativeModel: Model
+        + ExplanationContext(RDFModel model)
+        + setSubject(Resource subject)
+        + setPredicate(Property predicate)
+        + setObject(RDFNode object)
+        + setAlternativeModel(Model model)
+        + getModel(): Model
+        + getInfModel(): InfModel
+    }
+
+    class Explainer {
+        - rdfModel: RDFModel
+        - explanation: Explanation
+        - context: ExplanationContext
+        + setModel(RDFModel model)
+        + setExplanationType(Explanation type)
+        + setExplanationParameters(Resource subject, \nProperty predicate, RDFNode object)
+        + setAlternativeModel(Model model)
+        + getModel(): RDFModel
+        + getExplanationType(): Explanation
+        + getContext(): ExplanationContext
+        + explain(): String
+    }
+
+    class ExplanationRunner {
+        ' - {static} TAG: String
+        ' - {static} typeMapper: TypeMapper
+        ' - {static} xsdDouble: RDFDatatype
+        
+        + {static} print(String message)
+        + {static} runExplanation(ModelType modelType, ExplanationType explanationType)
+        - {static} setupExplanationParameters(Explainer explainer, ModelType modelType)
+        - {static} setupFoodRecommendationParameters(Explainer explainer, Model model)
+        - {static} setupLoanEligibilityParameters(Explainer explainer, Model model)
+        - {static} setupTransitiveParameters(Explainer explainer, Model model)
+        + {static} run()
+    }
+
+    ' Factory Classes
+    class RDFModelFactory {
+        + {static} createModel(ModelType type): RDFModel
+    }
+
+    class ExplanationFactory {
+        + {static} createExplanation(ExplanationType type): Explanation
+    }
+
+    ' Utility Classes
+    class StatementUtils {
+        ' + {static} generateStatement(Triple triple, Model model): Statement
+        ' + {static} describeTriple(Triple triple): String
+        ' + {static} describeStatement(Statement statement): String
+        ' + {static} generateInfModel(Model baseModel, String rules): InfModel
+    }
+
+    class URIConstants {
+        ' + {static} SCHEMA_URI: String
+        ' + {static} RDF_URI: String
+        ' + {static} EX_URI: String
+        ' + {static} FOAF_URI: String
+    }
+
+    ' Relationships
+    ExplanationRunner --> Explainer
+    ' ExplanationRunner ..> ExplanationFactory
+    ' ExplanationRunner ..> ModelType: uses
+    ' ExplanationRunner ..> ExplanationType: uses
+    ' ExplanationContext ..> StatementUtils: uses
+    Explainer --> Explanation
+    Explainer --> ExplanationContext
+    Explainer --> RDFModel
+    ExplanationContext --> RDFModel
+    RDFModelFactory ..> RDFModel: creates
+    ExplanationFactory ..> Explanation: creates
+    RDFModelFactory ..> ModelType: uses
+    ExplanationFactory ..> ExplanationType: uses
+    TraceBased ..> StatementUtils: uses
+    Contextual ..> StatementUtils: uses
+    Counterfactual ..> StatementUtils: uses
+    Contrastive ..> StatementUtils: uses
+    RDFModel ..> StatementUtils: uses
+    RDFModel ..> URIConstants: uses
+    FoodRecommendationModel ..> URIConstants: uses
+    LoanEligibilityModel ..> URIConstants: uses
+    TransitiveModel ..> URIConstants: uses
+}
+
+@enduml
