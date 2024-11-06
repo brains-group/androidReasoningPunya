@@ -222,10 +222,13 @@ public class ExplanationRunner {
         // Set-up the Additional Model needed to run the counterfactual explanation
         InfModel infModel = ModelFactory.getFoodRecommendationInfModel();
 
-        Resource person  = infModel.getResource(ModelFactory.getPersonURI());
-        Property totalSugars = infModel.getProperty("http://example.com/totalSugars");
+        // Resource person  = infModel.getResource(ModelFactory.getPersonURI());
+        // Property totalSugars = infModel.getProperty("http://example.com/totalSugars");
+        Resource food = infModel.getResource("http://example.com/food");
+        Property allowedToEat = infModel.getProperty("http://example.com/allowedToEat");
 
-        StmtIterator itr = infModel.listStatements(person, totalSugars, (RDFNode) null);
+        // StmtIterator itr = infModel.listStatements(person, totalSugars, (RDFNode) null);
+        StmtIterator itr = infModel.listStatements(food, allowedToEat, (RDFNode) null);
 
         // Use the Explainer to generate a counterfactual explanation.
         String result = "FoodRecommendation_Explainer -- CounterfactualExplanation\n";
@@ -314,7 +317,7 @@ public class ExplanationRunner {
             } else if (explanation.equals("contextual")) { // RUNS
                 runContextualExplanationTest();
             } else if (explanation.equals("counterfactual")) { // RUNS
-                runCounterfactualExplanationTest(); // INCORRECT: Runs an FoodRecommendation test
+                runCounterfactualExplanationTest(); // INCORRECT: Runs a FoodRecommendation test
             } else {
                 System.out.println("Invalid explanation: " + explanation);
             }

@@ -244,6 +244,7 @@ public class ModelFactory {
         rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
         rule1 += "-> (?var ex:sugars ?sugars)";
         rule1 += "]";
+        
         String rule2 = "[rule2: ";
         rule2 += "( ?user rdf:type foaf:Person) ";
         rule2 += "( ?user ex:ate ?food) ";
@@ -252,7 +253,25 @@ public class ModelFactory {
         rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
         rule2 += "]";
 
-        return rule1 + " " + rule2;
+        String rule3 = "[rule3: ";
+        rule3 += "( ?user rdf:type foaf:Person ) ";
+        rule3 += "( ?user ex:totalSugars ?currentTotal ) ";
+        rule3 += "( ?food ex:sugars ?foodSugars ) ";
+        rule3 += "sum(?currentTotal, ?foodSugars, ?potentialTotal) ";
+        rule3 += "lessThan(?potentialTotal, '50.0'^^http://www.w3.org/2001/XMLSchema#float) ";
+        rule3 += "-> ( ?user ex:allowedToEat ?food 'true'^^http://www.w3.org/2001/XMLSchema#boolean ) ";
+        rule3 += "]";
+
+        String rule4 = "[rule4: ";
+        rule4 += "( ?user rdf:type foaf:Person ) ";
+        rule4 += "( ?user ex:totalSugars ?currentTotal ) ";
+        rule4 += "( ?food ex:sugars ?foodSugars ) ";
+        rule4 += "sum(?currentTotal, ?foodSugars, ?potentialTotal) ";
+        rule4 += "greaterThan(?potentialTotal, '50.0'^^http://www.w3.org/2001/XMLSchema#float) ";
+        rule4 += "-> ( ?user ex:allowedToEat ?food 'false'^^http://www.w3.org/2001/XMLSchema#boolean ) ";
+        rule4 += "]";
+
+        return rule1 + " " + rule2 + " " + rule3 + " " + rule4;
     }
 
     public static String getFoodRecommendationRulesPrefix() {
@@ -280,7 +299,19 @@ public class ModelFactory {
         rule2 += "-> ( ?user " + exPrefix + "totalSugars ?totalSugars ) ";
         rule2 += "]";
 
-        return rule1 + " " + rule2;
+        String rule3 = "[rule3: ";
+        rule3 += "( ?food " + exPrefix + "sugars ?sugars ) ";
+        rule3 += "lessThan(?sugars, '25.0'^^http://www.w3.org/2001/XMLSchema#float) ";
+        rule3 += "-> ( ?food ex:allowedToEat 'true'^^http://www.w3.org/2001/XMLSchema#boolean ) ";
+        rule3 += "]";
+
+        String rule4 = "[rule4: ";
+        rule4 += "( ?food " + exPrefix + "sugars ?sugars ) ";
+        rule4 += "greaterThan(?sugars, '25.0'^^http://www.w3.org/2001/XMLSchema#float) ";
+        rule4 += "-> ( ?food ex:allowedToEat 'false'^^http://www.w3.org/2001/XMLSchema#boolean ) ";
+        rule4 += "]";
+
+        return rule1 + " " + rule2 + " " + rule3 + " " + rule4;
     }
 
     public static String getLoanEligibilityRules() {
