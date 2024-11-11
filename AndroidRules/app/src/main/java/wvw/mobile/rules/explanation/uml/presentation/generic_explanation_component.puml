@@ -1,0 +1,70 @@
+@startuml Generic Explanation Component
+
+skinparam {
+    FontSize 16
+    DefaultFontSize 16
+}
+
+skinparam rectangle {
+    BackgroundColor LightBlue
+    BorderColor DarkBlue
+    ArrowColor DarkBlue
+    FontSize 18
+}
+
+skinparam note {
+    BackgroundColor LightYellow
+    BorderColor DarkGray
+    FontSize 16
+}
+
+rectangle "Input Model" as Model
+note top of Model
+  Domain Models:
+  • Transitive Model
+  • Food Recommendation Model
+  • Loan Eligibility Model
+end note
+
+rectangle "RDF Triple" as Triple
+note top of Triple
+  Statement Structure:
+  • Subject
+  • Predicate
+  • Object
+
+  Example:
+  (Person, ate, Apple)
+end note
+
+rectangle "Explanation Type" as ExpType
+note top of ExpType
+  Types:
+  • Trace-based
+  • Contextual
+  • Counterfactual
+  • Contrastive
+end note
+
+rectangle "Explanation Component" as Component
+note left of Component
+  Generates explanations by combining:
+  • Domain model facts
+  • RDF statements
+  • Explanation strategy
+end note
+
+rectangle "Human-Readable\nExplanation" as Output
+note right of Output
+  Example Output:
+  "Person ate Apple because
+   Rule1 matched using
+   facts A and B"
+end note
+
+Model -[#blue]-> Component
+Triple -[#blue]-> Component
+ExpType -[#blue]-> Component
+Component -[#blue]-> Output
+
+@enduml

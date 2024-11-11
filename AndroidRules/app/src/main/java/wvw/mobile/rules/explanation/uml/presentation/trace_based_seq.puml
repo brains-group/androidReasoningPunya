@@ -1,0 +1,87 @@
+@startuml Trace-Based Explanation Flow
+
+skinparam {
+    fontSize 16
+    defaultFontSize 16
+    defaultTextAlignment center
+}
+
+skinparam sequence {
+    ParticipantBackgroundColor LightBlue
+    ParticipantBorderColor DarkBlue
+    ArrowColor DarkBlue
+    LifeLineBorderColor Gray
+    LifeLineBackgroundColor LightGray
+    NoteBorderColor DarkGray
+    NoteBackgroundColor LightYellow
+    ParticipantFontSize 18
+    ArrowFontSize 16
+    NoteFontSize 16
+}
+
+actor User
+participant "ExplanationRunner" as ER
+participant "Explainer" as E
+participant "InferenceModel" as IM
+
+User -> ER: Request Trace-Based Explanation
+activate ER
+
+ER -> E: Create Explainer
+activate E
+
+group Generate Trace Process
+    E -> IM: List All Statements
+    note right
+        Statements are RDF triples: (Subject, Predicate, Object)
+        Example: (Person, ate, Apple)
+    end note
+    
+    loop For Each Statement
+        E -> IM: Get Derivation
+        activate IM
+        note right
+            Checks if statement was:
+            Directly asserted in base model OR inferred using rules
+        end note
+        
+        alt Statement was Inferred
+            IM -> IM: Find Matching Rules
+            note right
+                Example Rule Match:
+                IF (Person ate Food) AND (Food hasSugar X)
+                THEN (Person totalSugar X)
+            end note
+            
+            IM -> IM: Get Supporting Facts
+            note right
+                Finds original facts that triggered the rule:
+                - Base model statements
+                - Previously inferred facts
+            end note
+        else Statement was Direct
+            IM -> IM: Mark as Base Fact
+            note right
+                Original statement from base
+                model, no inference needed
+            end note
+        end
+        
+        IM --> E: Return Derivation Chain
+        deactivate IM
+        
+        E -> E: Format Explanation
+        note right
+            Creates human-readable text:
+            "Statement X is true because it matched rule Y using facts A and B"
+        end note
+    end
+end group
+
+E --> ER: Return Complete Trace
+deactivate E
+
+ER --> User: Display Explanation
+deactivate ER
+
+@enduml

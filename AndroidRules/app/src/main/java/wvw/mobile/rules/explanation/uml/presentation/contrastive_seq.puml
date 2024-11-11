@@ -1,0 +1,87 @@
+@startuml Contrastive Explanation Flow
+
+skinparam {
+    FontSize 16
+    DefaultFontSize 16
+    DefaultTextAlignment center
+}
+
+skinparam sequence {
+    ParticipantBackgroundColor LightBlue
+    ParticipantBorderColor DarkBlue
+    ArrowColor DarkBlue
+    LifeLineBorderColor Gray
+    LifeLineBackgroundColor LightGray
+    NoteBorderColor DarkGray
+    NoteBackgroundColor LightYellow
+    ParticipantFontSize 18
+    ArrowFontSize 16
+    NoteFontSize 16
+}
+
+actor User
+participant "ExplanationRunner" as ER
+participant "Explainer" as E
+participant "ModelFactory" as MF
+participant "InfModel" as IM
+
+User -> ER: Request Contrastive Explanation
+activate ER
+
+ER -> E: Create Explainer
+activate E
+
+E -> MF: Get Base Model
+activate MF
+note right
+    Example:
+    Person A with
+    credit score 700
+end note
+MF --> E: Return Model
+deactivate MF
+
+E -> MF: Get Contrast Model
+activate MF
+note right
+    Example:
+    Person B with
+    credit score 600
+end note
+MF --> E: Return Model
+deactivate MF
+
+group Compare Models
+    E -> IM: Generate Inference Model A
+    activate IM
+    IM --> E: Return InfModel A
+    
+    E -> IM: Generate Inference Model B
+    IM --> E: Return InfModel B
+    
+    E -> E: Compare Outcomes
+    note right
+        Identifies differences:
+        • What's true for A
+        • What's true for B
+        • Why they differ
+    end note
+    deactivate IM
+end
+
+E -> E: Format Contrastive Explanation
+note right
+    Creates explanation like:
+    "A is eligible but B is not
+    because A's credit score
+    meets threshold while
+    B's does not"
+end note
+
+E --> ER: Return Explanation
+deactivate E
+
+ER --> User: Display Explanation
+deactivate ER
+
+@enduml

@@ -1,0 +1,71 @@
+@startuml Knowledge and Reasoning Architecture
+
+skinparam {
+    FontSize 16
+    DefaultFontSize 16
+}
+
+skinparam rectangle {
+    BackgroundColor LightBlue
+    BorderColor DarkBlue
+    ArrowColor DarkBlue
+    FontSize 18
+}
+
+skinparam note {
+    BackgroundColor LightYellow
+    BorderColor DarkGray
+    FontSize 16
+}
+
+' Input Layer
+rectangle "Input Layer" as IL {
+    rectangle "Domain Facts" as DF
+    rectangle "User Input" as UI
+}
+
+' Knowledge Layer
+rectangle "Knowledge Graph" as KG {
+    rectangle "Base Model" as BM
+    rectangle "Inference Model" as IM
+}
+
+' Processing Layer
+rectangle "Reasoning System" as RS {
+    rectangle "Rules File" as RF
+    rectangle "Generic Rule Reasoner" as R
+}
+
+' Output Layer
+rectangle "Explainer" as E
+
+' Connections with better routing
+IL -[thickness=2]right-> BM : "1. Populates with facts"
+RF -[thickness=2]-> R : "2. Configures reasoner"
+BM -[thickness=2]down-> R : "3. Provides facts"
+R -[thickness=2]right-> IM : "4. Generates inferences"
+E -[thickness=2]up-> IM : "5. Queries for explanations"
+
+note bottom of IL
+  Input Examples:
+  • Domain Facts (from ontologies)
+  • User Facts (credit score: 700)
+  • External Data (USDA database)
+end note
+
+note right of RS
+  Reasoning Process:
+  • Loads rules from file
+  • Matches patterns in facts
+  • Applies inference rules
+  • Tracks derivations
+end note
+
+note right of E
+  Explanation Types:
+  • Trace-based
+  • Contextual
+  • Counterfactual
+end note
+
+@enduml

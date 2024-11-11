@@ -1,0 +1,98 @@
+@startuml Counterfactual Explanation Flow
+
+skinparam {
+    FontSize 16
+    DefaultFontSize 16
+    DefaultTextAlignment center
+}
+
+skinparam sequence {
+    ParticipantBackgroundColor LightBlue
+    ParticipantBorderColor DarkBlue
+    ArrowColor DarkBlue
+    LifeLineBorderColor Gray
+    LifeLineBackgroundColor LightGray
+    NoteBorderColor DarkGray
+    NoteBackgroundColor LightYellow
+    ParticipantFontSize 18
+    ArrowFontSize 16
+    NoteFontSize 16
+}
+
+actor User
+participant "ExplanationRunner" as ER
+participant "Explainer" as E
+participant "ModelFactory" as MF
+participant "RuleEngine" as RE
+participant "InfModel" as IM
+
+User -> ER: Request "What-if" Explanation
+activate ER
+
+ER -> E: Initialize Explainer
+activate E
+
+E -> MF: Load Base Rules Model
+activate MF
+MF --> E: Return Rules
+deactivate MF
+
+E -> MF: Get User's Application
+activate MF
+note right
+    Current Application:
+    • DTI: 40%, Credit Score: 625
+    Result: Not Eligible
+end note
+MF --> E: Return Application
+deactivate MF
+
+group Find Nearest Approved Neighbors
+    E -> IM: Get Approved Applications
+    activate IM
+    note right
+        Query historical cases
+        that were approved
+    end note
+    IM --> E: Return Approved Cases
+    deactivate IM
+
+    E -> E: Calculate Feature Distances
+    note right
+        Find closest approved
+        applications
+    end note
+
+    E -> E: Generate Minimal Changes
+    note right
+        Select smallest changes
+        needed based on:
+        • Feature importance
+        • Change magnitude
+    end note
+
+    E -> IM: Apply Rules to Modified Application
+    activate IM
+    note right
+        Run modified application
+        through rules to confirm:
+        • Changes are valid
+        • Result is "Approved"
+    end note
+    IM --> E: Return Validation Result
+    deactivate IM
+end
+
+E -> E: Create Simple Explanation
+note right
+    "You could qualify by: Reducing DTI to 35%
+      (like similar approved case)"
+end note
+
+E --> ER: Return What-if Analysis
+deactivate E
+
+ER --> User: Show Results
+deactivate ER
+
+@enduml

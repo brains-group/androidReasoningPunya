@@ -1,0 +1,82 @@
+@startuml Contextual Explanation Flow
+
+skinparam {
+    FontSize 16
+    DefaultFontSize 16
+    DefaultTextAlignment center
+}
+
+skinparam sequence {
+    ParticipantBackgroundColor LightBlue
+    ParticipantBorderColor DarkBlue
+    ArrowColor DarkBlue
+    LifeLineBorderColor Gray
+    LifeLineBackgroundColor LightGray
+    NoteBorderColor DarkGray
+    NoteBackgroundColor LightYellow
+    ParticipantFontSize 18
+    ArrowFontSize 16
+    NoteFontSize 16
+}
+
+actor User
+participant "ExplanationRunner" as ER
+participant "Explainer" as E
+participant "InfModel" as IM
+participant "Reasoner" as R
+
+User -> ER: Request Contextual Explanation
+activate ER
+
+ER -> E: Create Explainer
+activate E
+
+E -> E: Set Base Model & Rules
+note right
+    Initializes with:
+    • Domain Model
+    • Inference Rules
+end note
+
+E -> R: Create Generic Rule Reasoner
+activate R
+
+R -> IM: Bind Model & Rules
+activate IM
+note right
+    Creates inference model
+    with reasoning capabilities
+end note
+
+IM --> E: Return InfModel
+deactivate IM
+
+E -> IM: Get Statement Derivations
+activate IM
+
+loop For Each Derivation
+    IM -> IM: Process Rule Matches
+    note right
+        Examines:
+        • Applied Rules
+        • Matched Patterns
+        • Supporting Facts
+    end note
+    
+    IM -> E: Return Derivation Chain
+    
+    E -> E: Format Contextual Explanation
+    note right
+        Creates explanation like:
+        "X is true because it matched
+        rule Y in situation Z"
+    end note
+end
+
+E --> ER: Return Explanation
+deactivate E
+
+ER --> User: Display Explanation
+deactivate ER
+
+@enduml

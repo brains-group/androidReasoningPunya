@@ -1,0 +1,76 @@
+@startuml Reasoning Process Flow
+
+skinparam {
+    FontSize 16
+    DefaultFontSize 16
+}
+
+skinparam sequence {
+    ParticipantBackgroundColor LightBlue
+    ParticipantBorderColor DarkBlue
+    ArrowColor DarkBlue
+    LifeLineBorderColor Gray
+    LifeLineBackgroundColor LightGray
+    NoteBorderColor DarkGray
+    NoteBackgroundColor LightYellow
+    ParticipantFontSize 18
+    ArrowFontSize 16
+    NoteFontSize 16
+}
+
+participant "User Input" as UI
+participant "Base Model" as BM
+participant "Reasoner" as R
+participant "Inference Model" as IM
+participant "Explainer" as E
+
+UI -> BM: Add Facts\n(RDF Triples)
+activate BM
+
+BM -> R: Submit Facts
+activate R
+
+R -> R: Load Rules
+note right
+    Rules from .rules file:
+    IF conditions THEN conclusion
+end note
+
+loop For Each Rule
+    R -> R: Match Patterns
+    note right
+        Check if facts match
+        rule conditions
+    end note
+    
+    R -> R: Apply Rules
+    note right
+        Generate new facts
+        Track derivations
+    end note
+end
+
+R -> IM: Store Results
+activate IM
+note right
+    Contains:
+    • Original facts
+    • Inferred facts
+    • Derivation chains
+end note
+
+E -> IM: Query Results
+activate E
+IM -> E: Return Facts\n& Derivations
+
+E -> E: Generate Explanation
+note right
+    Use derivation chains
+    to explain how conclusions
+    were reached
+end note
+
+E --> UI: Return Explanation
+deactivate E
+
+@enduml
