@@ -277,8 +277,9 @@ public class ModelFactory {
     public static String getFoodRecommendationRulesPrefix() {
         // Define prefixes as constants to avoid errors
         String schemaPrefix = "http://schema.org/";
-        String usdaPrefix = "http://example.com/usda#";
-        String exPrefix = "http://example.com/ex#";
+        // String usdaPrefix = "http://example.com/usda#";
+        String usdaPrefix = "http://idea.rpi.edu/heals/kb/usda-ontology#";
+        String exPrefix = "http://example.com/";
         String rdfPrefix = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
         String foafPrefix = "http://xmlns.com/foaf/0.1/";
 
@@ -300,45 +301,80 @@ public class ModelFactory {
         rule2 += "]";
 
         String rule3 = "[rule3: ";
-        rule3 += "( ?food " + exPrefix + "sugars ?sugars ) ";
+        rule3 += "( ?observation " + exPrefix + "sugars ?sugars ) ";
         rule3 += "lessThan(?sugars, '25.0'^^http://www.w3.org/2001/XMLSchema#float) ";
-        rule3 += "-> ( ?food ex:allowedToEat 'true'^^http://www.w3.org/2001/XMLSchema#boolean ) ";
+        rule3 += "-> ( ?observation " + exPrefix + "allowedToEat 'true'^^http://www.w3.org/2001/XMLSchema#boolean ) ";
         rule3 += "]";
 
         String rule4 = "[rule4: ";
-        rule4 += "( ?food " + exPrefix + "sugars ?sugars ) ";
+        rule4 += "( ?observation " + exPrefix + "sugars ?sugars ) ";
         rule4 += "greaterThan(?sugars, '25.0'^^http://www.w3.org/2001/XMLSchema#float) ";
-        rule4 += "-> ( ?food ex:allowedToEat 'false'^^http://www.w3.org/2001/XMLSchema#boolean ) ";
+        rule4 += "-> ( ?observation " + exPrefix + "allowedToEat 'false'^^http://www.w3.org/2001/XMLSchema#boolean ) ";
         rule4 += "]";
 
         return rule1 + " " + rule2 + " " + rule3 + " " + rule4;
     }
 
+    // public static String getLoanEligibilityRules() {
+    //     String rule1 = "[rule1: ";
+    //     rule1 += "( ?applicant <http://schema.org/income> ?monthlyIncome ) ";
+    //     rule1 += "( ?applicant <http://schema.org/debt> ?monthlyDebt ) ";
+    //     rule1 += "quotient(?monthlyDebt, ?monthlyIncome, ?debtToIncomeRatio) ";
+    //     rule1 += "-> (?applicant <http://example.com/debtToIncomeRatio> ?debtToIncomeRatio) ";
+    //     rule1 += "]";
+
+    //     String rule2 = "[rule2: ";
+    //     rule2 += "( ?applicant <http://schema.org/creditScore> ?creditScore ) ";
+    //     rule2 += "( ?applicant <http://example.com/debtToIncomeRatio> ?debtToIncomeRatio ) ";
+    //     rule2 += "lessThanOrEqual(?debtToIncomeRatio, '0.35'^^xsd:float) ";
+    //     rule2 += "greaterThanOrEqual(?creditScore, '620'^^xsd:integer) ";
+    //     rule2 += "-> (?applicant <http://example.com/loanEligibility> \"Eligible\")";
+    //     rule2 += "]";
+
+    //     String rule3 = "[rule3: ";
+    //     rule3 += "( ?applicant <http://example.com/debtToIncomeRatio> ?debtToIncomeRatio ) ";
+    //     rule3 += "( ?applicant <http://schema.org/creditScore> ?creditScore ) ";
+    //     rule3 += "not(lessThanOrEqual(?debtToIncomeRatio, '0.35'^^xsd:float)) ";
+    //     rule3 += "or(not(greaterThanOrEqual(?creditScore, '620'^^xsd:integer))) ";
+    //     rule3 += "-> (?applicant <http://example.com/loanEligibility> \"Not Eligible\")";
+    //     rule3 += "]";
+
+    //     return rule1 + " " + rule2 + " " + rule3;
+    // }
+
     public static String getLoanEligibilityRules() {
-        String rule1 = "[rule1: ";
-        rule1 += "( ?applicant <http://schema.org/income> ?monthlyIncome ) ";
-        rule1 += "( ?applicant <http://schema.org/debt> ?monthlyDebt ) ";
-        rule1 += "quotient(?monthlyDebt, ?monthlyIncome, ?debtToIncomeRatio) ";
-        rule1 += "-> (?applicant <http://example.com/debtToIncomeRatio> ?debtToIncomeRatio) ";
-        rule1 += "]";
+        String rules = "[rule1: "
+        + "(?applicant http://example.com/income ?incomeNode) "
+        + "(?incomeNode http://schema.org/value ?monthlyIncome) "
+        + "(?applicant http://example.com/debt ?debtNode) "
+        + "(?debtNode http://schema.org/value ?monthlyDebt) "
+        + "product(?monthlyDebt, '1.0'^^xsd:float, ?debtFloat) "
+        + "product(?monthlyIncome, '1.0'^^xsd:float, ?incomeFloat) "
+        + "quotient(?debtFloat, ?incomeFloat, ?ratio) "
+        + "-> "
+        + "(?applicant http://example.com/debtToIncomeRatio ?ratio)"
+        + "]"
+        + "\n"
+        + "[rule2: "
+        + "(?applicant http://example.com/creditScore ?scoreNode) "
+        + "(?scoreNode http://schema.org/value ?creditScore) "
+        + "(?applicant http://example.com/debtToIncomeRatio ?ratio) "
+        + "lessThan(?ratio, '0.35'^^xsd:float) "
+        + "greaterThan(?creditScore, '620'^^xsd:int) "
+        + "-> "
+        + "(?applicant http://example.com/loanEligibility \"Eligible\")"
+        + "]"
+        + "\n"
+        + "[rule3: "
+        + "(?applicant http://example.com/debtToIncomeRatio ?ratio) "
+        + "(?applicant http://example.com/creditScore ?scoreNode) "
+        + "(?scoreNode http://schema.org/value ?creditScore) "
+        + "ge(?ratio, '0.35'^^xsd:float) "
+        + "-> "
+        + "(?applicant http://example.com/loanEligibility \"Not Eligible\")"
+        + "]";
 
-        String rule2 = "[rule2: ";
-        rule2 += "( ?applicant <http://schema.org/creditScore> ?creditScore ) ";
-        rule2 += "( ?applicant <http://example.com/debtToIncomeRatio> ?debtToIncomeRatio ) ";
-        rule2 += "lessThanOrEqual(?debtToIncomeRatio, '0.35'^^xsd:float) ";
-        rule2 += "greaterThanOrEqual(?creditScore, '620'^^xsd:integer) ";
-        rule2 += "-> (?applicant <http://example.com/loanEligibility> \"Eligible\")";
-        rule2 += "]";
-
-        String rule3 = "[rule3: ";
-        rule3 += "( ?applicant <http://example.com/debtToIncomeRatio> ?debtToIncomeRatio ) ";
-        rule3 += "( ?applicant <http://schema.org/creditScore> ?creditScore ) ";
-        rule3 += "not(lessThanOrEqual(?debtToIncomeRatio, '0.35'^^xsd:float)) ";
-        rule3 += "or(not(greaterThanOrEqual(?creditScore, '620'^^xsd:integer))) ";
-        rule3 += "-> (?applicant <http://example.com/loanEligibility> \"Not Eligible\")";
-        rule3 += "]";
-
-        return rule1 + " " + rule2 + " " + rule3;
+        return rules;
     }
 
 
@@ -352,23 +388,23 @@ public class ModelFactory {
         PrintUtil.registerPrefix("ex", ex);
         PrintUtil.registerPrefix("foaf", foaf);
 
-        String rule1 = "[rule1: ";
-        rule1 += "( ?var schema:weight ?weight ) ";
-        rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
-        rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
-        rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
-        rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
-        rule1 += "-> (?var ex:sugars ?sugars)";
-        rule1 += "]";
-        String rule2 = "[rule2: ";
-        rule2 += "( ?user rdf:type foaf:Person) ";
-        rule2 += "( ?user ex:ate ?food) ";
-        rule2 += "( ?food ex:sugars ?sugar) ";
-        rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
-        rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
-        rule2 += "]";
+        // String rule1 = "[rule1: ";
+        // rule1 += "( ?var schema:weight ?weight ) ";
+        // rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
+        // rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
+        // rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
+        // rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
+        // rule1 += "-> (?var ex:sugars ?sugars)";
+        // rule1 += "]";
+        // String rule2 = "[rule2: ";
+        // rule2 += "( ?user rdf:type foaf:Person) ";
+        // rule2 += "( ?user ex:ate ?food) ";
+        // rule2 += "( ?food ex:sugars ?sugar) ";
+        // rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
+        // rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
+        // rule2 += "]";
 
-        String rules = rule1 + " " + rule2;
+        String rules = getFoodRecommendationRulesPrefix();
 
         Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
 
@@ -385,32 +421,32 @@ public class ModelFactory {
         PrintUtil.registerPrefix("rdf", rdfURI);
         PrintUtil.registerPrefix("ex", ex);
 
-        // Define the loan eligibility rules
-        String rule1 = "[rule1: ";
-        rule1 += "( ?applicant schema:income ?monthlyIncome ) ";
-        rule1 += "( ?applicant schema:debt ?monthlyDebt ) ";
-        rule1 += "quotient(?monthlyDebt, ?monthlyIncome, ?debtToIncomeRatio) ";
-        rule1 += "-> (?applicant ex:debtToIncomeRatio ?debtToIncomeRatio) ";
-        rule1 += "]";
+        // // Define the loan eligibility rules
+        // String rule1 = "[rule1: ";
+        // rule1 += "( ?applicant schema:income ?monthlyIncome ) ";
+        // rule1 += "( ?applicant schema:debt ?monthlyDebt ) ";
+        // rule1 += "quotient(?monthlyDebt, ?monthlyIncome, ?debtToIncomeRatio) ";
+        // rule1 += "-> (?applicant ex:debtToIncomeRatio ?debtToIncomeRatio) ";
+        // rule1 += "]";
 
-        String rule2 = "[rule2: ";
-        rule2 += "( ?applicant schema:creditScore ?creditScore ) ";
-        rule2 += "( ?applicant ex:debtToIncomeRatio ?debtToIncomeRatio ) ";
-        rule2 += "lessThanOrEqual(?debtToIncomeRatio, '0.35'^^http://www.w3.org/2001/XMLSchema#float) ";
-        rule2 += "greaterThanOrEqual(?creditScore, '620'^^http://www.w3.org/2001/XMLSchema#integer) ";
-        rule2 += "-> (?applicant ex:loanEligibility \"Eligible\")";
-        rule2 += "]";
+        // String rule2 = "[rule2: ";
+        // rule2 += "( ?applicant schema:creditScore ?creditScore ) ";
+        // rule2 += "( ?applicant ex:debtToIncomeRatio ?debtToIncomeRatio ) ";
+        // rule2 += "lessThanOrEqual(?debtToIncomeRatio, '0.35'^^http://www.w3.org/2001/XMLSchema#float) ";
+        // rule2 += "greaterThanOrEqual(?creditScore, '620'^^http://www.w3.org/2001/XMLSchema#integer) ";
+        // rule2 += "-> (?applicant ex:loanEligibility \"Eligible\")";
+        // rule2 += "]";
 
-        String rule3 = "[rule3: ";
-        rule3 += "( ?applicant ex:debtToIncomeRatio ?debtToIncomeRatio ) ";
-        rule3 += "( ?applicant schema:creditScore ?creditScore ) ";
-        rule3 += "not(lessThanOrEqual(?debtToIncomeRatio, '0.35'^^http://www.w3.org/2001/XMLSchema#float)) ";
-        rule3 += "or(not(greaterThanOrEqual(?creditScore, '620'^^http://www.w3.org/2001/XMLSchema#integer))) ";
-        rule3 += "-> (?applicant ex:loanEligibility \"Not Eligible\")";
-        rule3 += "]";
+        // String rule3 = "[rule3: ";
+        // rule3 += "( ?applicant ex:debtToIncomeRatio ?debtToIncomeRatio ) ";
+        // rule3 += "( ?applicant schema:creditScore ?creditScore ) ";
+        // rule3 += "not(lessThanOrEqual(?debtToIncomeRatio, '0.35'^^http://www.w3.org/2001/XMLSchema#float)) ";
+        // rule3 += "or(not(greaterThanOrEqual(?creditScore, '620'^^http://www.w3.org/2001/XMLSchema#integer))) ";
+        // rule3 += "-> (?applicant ex:loanEligibility \"Not Eligible\")";
+        // rule3 += "]";
 
         // Combine the rules
-        String rules = rule1 + " " + rule2 + " " + rule3;
+        String rules = getLoanEligibilityRules();
 
         // Create a reasoner using the rules and apply it to the base model
         Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
@@ -461,7 +497,7 @@ public class ModelFactory {
 
         // Create literals
         Literal monthlyIncome = model.createTypedLiteral(new BigDecimal(4000)); // Monthly income in dollars for second type
-        Literal monthlyDebt = model.createTypedLiteral(new BigDecimal(1200)); // Monthly debt in dollars for second type
+        Literal monthlyDebt = model.createTypedLiteral(new BigDecimal(1600)); // Monthly debt in dollars for second type
         Literal creditScoreValue = model.createTypedLiteral(new Integer(650)); // Credit score as integer for second type
         String dollars = "USD"; // Unit of currency (dollars)
         String scoreUnit = "integer"; // Unit for credit score

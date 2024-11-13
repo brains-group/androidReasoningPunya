@@ -22,6 +22,7 @@ import com.hp.hpl.jena.reasoner.rulesys.RuleDerivation;
 
 import java.util.Iterator;
 import java.util.List;
+import com.hp.hpl.jena.util.PrintUtil;
 
 
 /**
@@ -162,6 +163,19 @@ public class Explainer {
         StmtIterator itr = thisInfModel.listStatements(statement.getSubject(), statement.getPredicate(), (RDFNode) null);
         StmtIterator itr2 = otherInfModel.listStatements(statement.getSubject(), statement.getPredicate(), (RDFNode) null);
 
+        // // Add debug logging
+        // Log.d("Explanation-Runner", "This model rules fired:");
+        // StmtIterator thisStmts = thisInfModel.listStatements();
+        // while(thisStmts.hasNext()) {
+        //     Log.d("Explanation-Runner", "\t" + thisStmts.next());
+        // }
+        
+        // Log.d("Explanation-Runner", "Other model rules fired:");
+        // StmtIterator otherStmts = otherInfModel.listStatements();
+        // while(otherStmts.hasNext()) {
+        //     Log.d("Explanation-Runner", "\t" + otherStmts.next());
+        // }
+
         // Find the triples (matches) and rule that was used to assert this statement, if it exists in the infModel.
         Iterator<Derivation> thisDerivItr = thisInfModel.getDerivation(statement);
         Iterator<Derivation> otherDerivItr = otherInfModel.getDerivation(statement);
@@ -300,6 +314,11 @@ public class Explainer {
         StringBuilder explanation = new StringBuilder("");
 
         InfModel model = generateInfModel(baseModel);
+        Log.d("Explanation-Runner", "Inference Model contents:");
+        StmtIterator infStmts = model.listStatements();
+        while(infStmts.hasNext()) {
+            Log.d("Explanation-Runner", "\t" + infStmts.next().toString());
+        }
 
         explanation.append(generateTraceBasedExplanation_B(this.baseModel, model, (Resource)subject,
                 (Property) property, (RDFNode) object));

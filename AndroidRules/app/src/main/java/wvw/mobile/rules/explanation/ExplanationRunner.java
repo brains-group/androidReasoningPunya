@@ -103,7 +103,6 @@ public class ExplanationRunner {
 
         // Set up the Explainer
         Explainer explainer = new Explainer();
-        print("\tCreated explainer");
 
         // Set up the Model with namespaces
         Model model = ModelFactory.getFoodRecommendationBaseModel();
@@ -112,11 +111,24 @@ public class ExplanationRunner {
         model.setNsPrefix("ex", "http://example.com/");
         model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
         explainer.Model(model);
-        print("\tCreated base model with namespaces");
+        print("Base Model contents:");
+        StmtIterator baseStmts = explainer.Model().listStatements();
+        while(baseStmts.hasNext()) {
+            print("\t" + baseStmts.next().toString());
+        }
 
         // Set up Rules
         explainer.Rules(ModelFactory.getFoodRecommendationRulesPrefix());
-        print("\tCreated rules");
+        print("Rules loaded:");
+        print(ModelFactory.getFoodRecommendationRulesPrefix());
+
+        // Check inference model
+        // print("Inference Model contents:");
+        // InfModel infModel = explainer.generateInfModel(explainer.Model());
+        // StmtIterator infStmts = infModel.listStatements();
+        // while(infStmts.hasNext()) {
+        //     print("\t" + infStmts.next().toString());
+        // }
 
         // Define the data type for double
         TypeMapper tm = TypeMapper.getInstance();
@@ -146,11 +158,19 @@ public class ExplanationRunner {
 
         // Set up the Explainer
         Explainer explainer = new Explainer();
-        print("\tCreated explainer:\t" + explainer);
+
+        // Set up the Base Model
         explainer.Model(ModelFactory.getLoanEligibilityBaseModel());
-        print("\tCreated Base Model:\t" + explainer.Model());
+        print("Base Model contents:");
+        StmtIterator baseStmts = explainer.Model().listStatements();
+        while(baseStmts.hasNext()) {
+            print("\t" + baseStmts.next().toString());
+        }
+
+        // Set up the Rules
         explainer.Rules(ModelFactory.getLoanEligibilityRules());
-        print("\tCreated Rules:\t" + explainer.Rules());
+        print("Rules loaded:");
+        print(ModelFactory.getLoanEligibilityRules());
 
         // Define the RDFDatatype for double
         TypeMapper tm = TypeMapper.getInstance();
@@ -182,7 +202,17 @@ public class ExplanationRunner {
         // Create and set-up the Explainer
         Explainer explainer = new Explainer();
         explainer.Model(ModelFactory.getFoodRecommendationBaseModel());
-        explainer.Rules(ModelFactory.getFoodRecommendationRules());
+        explainer.Rules(ModelFactory.getFoodRecommendationRulesPrefix());
+
+        // Add debug logging
+        Log.d("Explanation-Runner", "Base Model contents:");
+        StmtIterator baseStmts = explainer.Model().listStatements();
+        while(baseStmts.hasNext()) {
+            Log.d("Explanation-Runner", "\t" + baseStmts.next().toString());
+        }
+
+        Log.d("Explanation-Runner", "Rules:");
+        Log.d("Explanation-Runner", explainer.Rules());
 
         TypeMapper tm = TypeMapper.getInstance();
         RDFDatatype xsdDouble = tm.getTypeByName("http://www.w3.org/2001/XMLSchema#double");
@@ -206,32 +236,89 @@ public class ExplanationRunner {
         );
 
         print(results + "\n");
-
-        // TODO: Figure out why this isn't working
     }
 
-    public static void runCounterfactualExplanationTestFoodRecommendation(){
+    public static void runContextualExplanationTestLoanEligibility(){
 
-        print("Running Counterfactual Explanation Test on FoodRecommendation...");
+        print("Running Contextual Explanation Test on Loan Eligibility...");
+
+        // Create and set-up the Explainer
+        Explainer explainer = new Explainer();
+        explainer.Model(ModelFactory.getLoanEligibilityBaseModel());
+        explainer.Rules(ModelFactory.getLoanEligibilityRules());
+
+        // Add debug logging
+        Log.d("Explanation-Runner", "Base Model contents:");
+        StmtIterator baseStmts = explainer.Model().listStatements();
+        while(baseStmts.hasNext()) {
+            Log.d("Explanation-Runner", "\t" + baseStmts.next().toString());
+        }
+
+        Log.d("Explanation-Runner", "Rules:");
+        Log.d("Explanation-Runner", explainer.Rules());
+
+        TypeMapper tm = TypeMapper.getInstance();
+        RDFDatatype xsdDouble = tm.getTypeByName("http://www.w3.org/2001/XMLSchema#double");
+
+        // Generate the contextual explanation.
+        String results = "LoanEligibility_Explainer -- ContextualExplanation\n";
+        results += explainer.GetShallowContextualExplanation(
+                explainer.Model().getResource("http://xmlns.com/foaf/0.1/Person"),
+                explainer.Model().getProperty("http://example.com/debtToIncomeRatio"),
+                // explainer.Model().getResource("\"20.78\"^^http://www.w3.org/2001/XMLSchema#double")
+                ResourceFactory.createTypedLiteral("0.30", xsdDouble)
+        );
+
+        results += "\n";
+
+        results += explainer.GetSimpleContextualExplanation(
+                explainer.Model().getResource("http://xmlns.com/foaf/0.1/Person"),
+                explainer.Model().getProperty("http://example.com/debtToIncomeRatio"),
+                // explainer.Model().getResource("\"20.78\"^^http://www.w3.org/2001/XMLSchema#double")
+                ResourceFactory.createTypedLiteral("0.30", xsdDouble)
+        );
+
+        print(results + "\n");
+    }
+
+    public static void runContrastiveExplanationTestFoodRecommendation(){
+
+        print("Running Contrastive Explanation Test on FoodRecommendation...");
 
         // Set-up the Explainer
         Explainer explainer2 = new Explainer();
         explainer2.Model(ModelFactory.getFoodRecommendationBaseModel());
-        explainer2.Rules(ModelFactory.getFoodRecommendationRules());
+        explainer2.Rules(ModelFactory.getFoodRecommendationRulesPrefix());
+
+        // Add debug logging
+        Log.d("Explanation-Runner", "Base Model contents:");
+        StmtIterator baseStmts = explainer2.Model().listStatements();
+        while(baseStmts.hasNext()) {
+            Log.d("Explanation-Runner", "\t" + baseStmts.next().toString());
+        }
+
+        Log.d("Explanation-Runner", "Rules:");
+        Log.d("Explanation-Runner", explainer2.Rules());
 
         // Set-up the Additional Model needed to run the counterfactual explanation
         InfModel infModel = ModelFactory.getFoodRecommendationInfModel();
 
+        Log.d("Explanation-Runner", "Inference Model contents:");
+        StmtIterator infStmts = infModel.listStatements();
+        while(infStmts.hasNext()) {
+            Log.d("Explanation-Runner", "\t" + infStmts.next().toString());
+        }
+
         // Resource person  = infModel.getResource(ModelFactory.getPersonURI());
         // Property totalSugars = infModel.getProperty("http://example.com/totalSugars");
-        Resource food = infModel.getResource("http://example.com/food");
+        Resource observation = infModel.getResource("http://example.com/observation");
         Property allowedToEat = infModel.getProperty("http://example.com/allowedToEat");
 
         // StmtIterator itr = infModel.listStatements(person, totalSugars, (RDFNode) null);
-        StmtIterator itr = infModel.listStatements(food, allowedToEat, (RDFNode) null);
+        StmtIterator itr = infModel.listStatements(observation, allowedToEat, (RDFNode) null);
 
         // Use the Explainer to generate a counterfactual explanation.
-        String result = "FoodRecommendation_Explainer -- CounterfactualExplanation\n";
+        String result = "FoodRecommendation_Explainer -- ContrastiveExplanation\n";
         while(itr.hasNext()) {
             Statement s = itr.next();
             result += explainer2.GetFullCounterfactualExplanation_B(s, ModelFactory.getFoodRecommendationBaseModelBanana());
@@ -239,17 +326,33 @@ public class ExplanationRunner {
         print(result);
     }
 
-    public static void runCounterfactualExplanationTestLoanEligibility() {
+    public static void runContrastiveExplanationTestLoanEligibility() {
 
-        System.out.println("Running Counterfactual Explanation Test on Loan Eligibility...");
+        Log.d("Explanation-Runner", "Running Contrastive Explanation Test on Loan Eligibility...");
 
         // Set-up the Explainer
         Explainer explainer = new Explainer();
         explainer.Model(ModelFactory.getLoanEligibilityBaseModel());
         explainer.Rules(ModelFactory.getLoanEligibilityRules());
 
+        // Add debug logging
+        Log.d("Explanation-Runner", "Base Model contents:");
+        StmtIterator baseStmts = explainer.Model().listStatements();
+        while(baseStmts.hasNext()) {
+            Log.d("Explanation-Runner", "\t" + baseStmts.next().toString());
+        }
+
+        Log.d("Explanation-Runner", "Rules:");
+        Log.d("Explanation-Runner", explainer.Rules());
+
         // Set-up the Additional Model needed to run the counterfactual explanation
         InfModel infModel = ModelFactory.getLoanEligibilityInfModel();
+
+        // Log.d("Explanation-Runner", "Inference Model contents:");
+        // StmtIterator infStmts = infModel.listStatements();
+        // while(infStmts.hasNext()) {
+        //     Log.d("Explanation-Runner", "\t" + infStmts.next().toString());
+        // }
 
         Resource applicant = infModel.getResource(ModelFactory.getPersonURI());
         Property loanEligibility = infModel.getProperty("http://example.com/loanEligibility");
@@ -258,12 +361,12 @@ public class ExplanationRunner {
         StmtIterator itr = infModel.listStatements(applicant, loanEligibility, (RDFNode) null);
 
         // Use the Explainer to generate a counterfactual explanation.
-        String result = "LoanEligibility_Explainer -- Counterfactual Explanation\n";
+        String result = "LoanEligibility_Explainer -- Contrastive Explanation\n";
         while (itr.hasNext()) {
             Statement s = itr.next();
             result += explainer.GetFullCounterfactualExplanation_B(s, ModelFactory.getLoanEligibilityBaseModelSecondType());
         }
-        System.out.println(result);
+        Log.d("Explanation-Runner", result);
     }
 
 //    public static void runContrastiveExplanationTestFoodRecommendation() {
@@ -316,26 +419,30 @@ public class ExplanationRunner {
                 runTraceBasedExplanationTest();
             } else if (explanation.equals("contextual")) { // RUNS
                 runContextualExplanationTest();
-            } else if (explanation.equals("counterfactual")) { // RUNS
-                runCounterfactualExplanationTest(); // INCORRECT: Runs a FoodRecommendation test
             } else {
                 System.out.println("Invalid explanation: " + explanation);
             }
         } else if (test.equals("food-recommendation")) {
-            if (explanation.equals("trace-based")) {
+            if (explanation.equals("trace-based")) { // RUNS
                 runTraceBasedExplanationTestFoodRecommendation();
             } else if (explanation.equals("contextual")) {
                 runContextualExplanationTestFoodRecommendation();
-            } else if (explanation.equals("counterfactual")) { // RUNS
-                runCounterfactualExplanationTestFoodRecommendation();
+            } else if (explanation.equals("counterfactual")) { 
+                // runCounterfactualExplanationTestFoodRecommendation();
+            } else if (explanation.equals("contrastive")) { 
+                runContrastiveExplanationTestFoodRecommendation();
             } else {
                 System.out.println("Invalid explanation: " + explanation);
             }
         } else if (test.equals("loan-eligibility")) {
-            if (explanation.equals("trace-based")) {
+            if (explanation.equals("trace-based")) { // RUNS
                 runTraceBasedExplanationTestLoanEligibility();
+            } else if (explanation.equals("contextual")) {
+                runContextualExplanationTestLoanEligibility();
             } else if (explanation.equals("counterfactual")) {
-                runCounterfactualExplanationTestLoanEligibility();
+                // runCounterfactualExplanationTestLoanEligibility();
+            } else if (explanation.equals("contrastive")) {
+                runContrastiveExplanationTestLoanEligibility();
             } else {
                 System.out.println("Invalid explanation: " + explanation);
             }
@@ -349,42 +456,28 @@ public class ExplanationRunner {
         // Create model...
         PrintUtil.registerPrefix("ex", ModelFactory.getGlobalURI());
 
-        // Models and Rules
-//        print("Transitive Base Model & Rules:");
-//        print(ModelFactory.getTransitiveBaseModel().toString());
-//        print("[transitiveRule: (?a ex:equals ?b) (?b ex:equals ?c) -> (?a ex:equals ?c)]");
-//        print("FoodRecommendation Base Model & Rules & Inf Model:");
-//        print(ModelFactory.getFoodRecommendationBaseModel().toString());
-//        print(ModelFactory.getFoodRecommendationRules());
-//        print(ModelFactory.getFoodRecommendationInfModel().toString());
-//        print("Loan Eligibility Base Model & Rules & Inf Model:");
-//        print(ModelFactory.getLoanEligibilityBaseModel().toString());
-//        print(ModelFactory.getLoanEligibilityRules());
-//        print(ModelFactory.getLoanEligibilityInfModel().toString());
-
         // Trace-Based Explanations
         runExplanationTest("transitive", "trace-based");
         runExplanationTest("food-recommendation", "trace-based");
         runExplanationTest("loan-eligibility", "trace-based");
-        // runTraceBasedExplanationTest();
-        // runTraceBasedExplanationTestFoodRecommendation();
-        // runTraceBasedExplanationTestLoanEligibility();
 
         // Contextual Explanations
         runExplanationTest("transitive", "contextual");
-//        runExplanationTest("FoodRecommendation", "contextual");
-        // runContextualExplanationTest();
-        // runContextualExplanationTestFoodRecommendation();
+        runExplanationTest("food-recommendation", "contextual");
+        runExplanationTest("loan-eligibility", "contextual");
 
+        // Contrastive Explanations
+        runExplanationTest("food-recommendation", "contrastive");
+        runExplanationTest("loan-eligibility", "contrastive");
+        
         // Counterfactual Explanations
-        runExplanationTest("transitive", "counterfactual");
+        // runExplanationTest("transitive", "counterfactual"); // FAILS
         runExplanationTest("food-recommendation", "counterfactual");
         runExplanationTest("loan-eligibility", "counterfactual");
         // runCounterfactualExplanationTest();
         // runCounterfactualExplanationTestFoodRecommendation();
         // runCounterfactualExplanationTestLoanEligibility();
 
-        // Contrastive Explanations
-        // runContrastiveExplanationTestFoodRecommendation();
+        
     }
 }
