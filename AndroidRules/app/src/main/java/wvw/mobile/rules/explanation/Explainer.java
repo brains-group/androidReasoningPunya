@@ -1,8 +1,10 @@
 package wvw.mobile.rules.explanation;
 
+// Java Standard Libraries
+import java.util.Iterator;
+import java.util.List;
 
-import android.util.Log;
-
+// Apache Jena Core Libraries
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.InfModel;
@@ -14,15 +16,17 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
+
+// Apache Jena Reasoner Libraries
 import com.hp.hpl.jena.reasoner.Derivation;
 import com.hp.hpl.jena.reasoner.Reasoner;
 import com.hp.hpl.jena.reasoner.rulesys.GenericRuleReasoner;
 import com.hp.hpl.jena.reasoner.rulesys.Rule;
 import com.hp.hpl.jena.reasoner.rulesys.RuleDerivation;
-
-import java.util.Iterator;
-import java.util.List;
 import com.hp.hpl.jena.util.PrintUtil;
+
+// Android Libraries
+import android.util.Log;
 
 
 /**
@@ -38,20 +42,20 @@ import com.hp.hpl.jena.util.PrintUtil;
  */
 public class Explainer {
 
-    // The base knowledge-graph created by the user. Prior reasoning
-    // is not required.
+    // ------------------------------------------------------------
+    // Properties
+    // ------------------------------------------------------------
+
+    // The base knowledge-graph created by the user. Prior reasoning is not required.
     private Model baseModel;
 
-    // The rules used by the reasoner to make additional assertions on
-    // the baseModel.
+    // The rules used by the reasoner to make additional assertions on the baseModel.
     private String rules;
 
     /**
      * Creates a new Explainer component.
      */
     public Explainer(){}
-
-    /// region Properties
 
     public Model Model(){
         return this.baseModel;
@@ -69,238 +73,11 @@ public class Explainer {
         this.rules = rules;
     }
 
-    ///endregion
-    ///region Methods
-
-    /**
-     * Generate counterfactual explanation for statement by comparing how this.baseModel reached the conclusion
-     * compared to how otherBaseModel differs(or match) the conclusion by using the same ruleSet, this.rules.
-     * Highlight the difference
-     * @param statement the statement (conclusion) to generate explanation
-     * @param otherBaseModel the other baseModel to compare this.baseModel to after apply this.rule to both
-     * @return The InfModel derived from the reasoner.
-     */
-    public String GetFullCounterfactualExplanation(Statement statement, Model otherBaseModel){
-        InfModel thisInfModel = generateInfModel(baseModel);
-        InfModel otherInfModel = generateInfModel(otherBaseModel);
-        String results = "";
-        StmtIterator itr = thisInfModel.listStatements(statement.getSubject(), statement.getPredicate(), (RDFNode) null);
-        StmtIterator itr2 = otherInfModel.listStatements(statement.getSubject(), statement.getPredicate(), (RDFNode) null);
-
-        // Find the triples (matches) and rule that was used to
-        // assert this statement, if it exists in the infModel.
-        Iterator<Derivation> thisDerivItr = thisInfModel.getDerivation(statement);
-        Iterator<Derivation> otherDerivItr = otherInfModel.getDerivation(statement);
-
-        while (thisDerivItr.hasNext()) {
-            // This model derivation
-            RuleDerivation thisDerivation = (RuleDerivation) thisDerivItr.next();
-            RuleDerivation otherDerivation = null;
-
-            // Complete derivation match
-            if (otherDerivItr.hasNext()) {
-                otherDerivation = (RuleDerivation) otherDerivItr.next();
-            }
-            // Partial derivation match (same subject, predicate but different object
-            else if (itr2.hasNext()) {
-                Statement otherMatch = itr2.next();
-                otherDerivItr = otherInfModel.getDerivation(otherMatch);
-                otherDerivation = (RuleDerivation) otherDerivItr.next();
-            }
-            Triple thisConclusion = thisDerivation.getConclusion();
-            Triple otherConclusion = null;
-            if (otherDerivation != null)
-                otherConclusion = otherDerivation.getConclusion();
-
-            if (otherConclusion == null) {
-                results += "This model concluded: " + thisConclusion.toString() + "\n";
-                results += "Alternate model didn't conclude anything.\n";
-                System.out.print(results);
-                return results;
-            } else if (thisConclusion.sameAs(otherConclusion.getSubject(),
-                    otherConclusion.getPredicate(),
-                    otherConclusion.getObject())) {
-                results += "Both model concluded: " + thisConclusion.toString() + "\n";
-                for (Triple match : thisDerivation.getMatches()) {
-                    Statement matchStatement = generateStatement(match);
-                    results += GetFullCounterfactualExplanation(matchStatement, otherBaseModel) + "\n";
-                }
-            } else {
-                results += "This model concluded: " + thisConclusion.toString() + " using Matches: \n";
-                for (Triple match : thisDerivation.getMatches()) {
-                    Statement matchStatement = generateStatement(match);
-                    results +=  " Match: " + matchStatement.toString() + "\n";
-                }
-                results += "Alternate model concluded: " + otherConclusion.toString() + " instead using Matches: \n";
-                for (Triple match2 : otherDerivation.getMatches()) {
-                    Statement matchStatement = generateStatement(match2);
-                    results += " Match: " + matchStatement.toString() + "\n";
-                }
-                // Recurse
-                for (Triple match : thisDerivation.getMatches()) {
-                    Statement matchStatement = generateStatement(match);
-                    if (!baseModel.contains(matchStatement)) {
-                        results += GetFullCounterfactualExplanation(matchStatement, otherBaseModel) + "\n";
-                    }
-                }
-            }
-        }
-        return results;
-    }
-
-    /**
-     * Generate counterfactual explanation for statement by comparing how this.baseModel reached the conclusion
-     * compared to how otherBaseModel differs (or match) the conclusion by using the same ruleSet, this.rules.
-     * Highlight the difference
-     * @param statement the statement (conclusion) to generate explanation
-     * @param otherBaseModel the other baseModel to compare this.baseModel to after apply this.rule to both
-     * @return The InfModel derived from the reasoner.
-     */
-    public String GetFullCounterfactualExplanation_B(Statement statement, Model otherBaseModel){
-        InfModel thisInfModel = generateInfModel(baseModel);
-        InfModel otherInfModel = generateInfModel(otherBaseModel);
-        String results = "";
-        StmtIterator itr = thisInfModel.listStatements(statement.getSubject(), statement.getPredicate(), (RDFNode) null);
-        StmtIterator itr2 = otherInfModel.listStatements(statement.getSubject(), statement.getPredicate(), (RDFNode) null);
-
-        // // Add debug logging
-        // Log.d("Explanation-Runner", "This model rules fired:");
-        // StmtIterator thisStmts = thisInfModel.listStatements();
-        // while(thisStmts.hasNext()) {
-        //     Log.d("Explanation-Runner", "\t" + thisStmts.next());
-        // }
-        
-        // Log.d("Explanation-Runner", "Other model rules fired:");
-        // StmtIterator otherStmts = otherInfModel.listStatements();
-        // while(otherStmts.hasNext()) {
-        //     Log.d("Explanation-Runner", "\t" + otherStmts.next());
-        // }
-
-        // Find the triples (matches) and rule that was used to assert this statement, if it exists in the infModel.
-        Iterator<Derivation> thisDerivItr = thisInfModel.getDerivation(statement);
-        Iterator<Derivation> otherDerivItr = otherInfModel.getDerivation(statement);
-
-        while (thisDerivItr.hasNext()) {
-            // This model derivation
-            RuleDerivation thisDerivation = (RuleDerivation) thisDerivItr.next();
-            RuleDerivation otherDerivation = null;
-
-            // Complete derivation match
-            if (otherDerivItr.hasNext()) {
-                otherDerivation = (RuleDerivation) otherDerivItr.next();
-            }
-            // Partial derivation match (same subject and predicate, but different object)
-            else if (itr2.hasNext()) {
-                Statement otherMatch = itr2.next();
-                otherDerivItr = otherInfModel.getDerivation(otherMatch);
-                otherDerivation = (RuleDerivation) otherDerivItr.next();
-            }
-            Triple thisConclusion = thisDerivation.getConclusion();
-            Triple otherConclusion = null;
-            if (otherDerivation != null)
-                otherConclusion = otherDerivation.getConclusion();
-
-            if (otherConclusion == null) {
-                results += "This model concluded: " + describeTriple(thisConclusion) + "\n";
-                results += "Alternate model didn't conclude anything.\n";
-                System.out.print(results);
-                return results;
-            } else if (thisConclusion.sameAs(otherConclusion.getSubject(),
-                    otherConclusion.getPredicate(),
-                    otherConclusion.getObject())) {
-                results += "Both model concluded: " + describeTriple(thisConclusion) + "\n";
-                for (Triple match : thisDerivation.getMatches()) {
-                    Statement matchStatement = generateStatement(match);
-                    results += GetFullCounterfactualExplanation_B(matchStatement, otherBaseModel) + "\n";
-                }
-            } else {
-                results += "This model concluded: " + describeTriple(thisConclusion) + " using Matches: \n";
-                for (Triple match : thisDerivation.getMatches()) {
-                    Statement matchStatement = generateStatement(match);
-                    // results +=  " Match: " + describeStatement(matchStatement) + "\n";
-                    results +=  "  " + describeStatement(matchStatement) + "\n";
-                }
-                results += "Alternate model concluded: " + describeTriple(otherConclusion) + " instead using Matches: \n";
-                for (Triple match2 : otherDerivation.getMatches()) {
-                    Statement matchStatement = generateStatement(match2);
-                    // results += " Match: " + describeStatement(matchStatement) + "\n";
-                    results += "  " + describeStatement(matchStatement) + "\n";
-                }
-                // Recurse
-                for (Triple match : thisDerivation.getMatches()) {
-                    Statement matchStatement = generateStatement(match);
-                    if (!baseModel.contains(matchStatement)) {
-                        results += GetFullCounterfactualExplanation_B(matchStatement, otherBaseModel) + "\n";
-                    }
-                }
-            }
-        }
-        return results;
-    }
 
 
-    // Helper method to describe a triple
-    private String describeTriple(Triple triple) {
-        // String subject = triple.getSubject().toString();
-        String subjectURI = triple.getSubject().getURI();
-        String[] subjectParts = subjectURI.split("/");
-        String subject = subjectParts[subjectParts.length - 1];
-
-        // String predicate = triple.getPredicate().toString();
-        String predicateURI = triple.getPredicate().getURI();
-        String[] predicateParts = predicateURI.split("/");
-        String predicate = predicateParts[predicateParts.length - 1];
-
-        String object;
-        if (triple.getObject().isLiteral()) {
-            String literalValue = triple.getObject().getLiteral().toString();
-            String[] objectParts = literalValue.split("\\^\\^");
-            // Return the first part which contains the numeric value
-            object = objectParts[0];
-        } else {
-            // object = triple.getObject().toString();
-            String objectURI = triple.getObject().getURI();
-            String[] objectParts = objectURI.split("/");
-            object = objectParts[objectParts.length - 1];
-        }
-        return "Subject: " + subject + " , Predicate: " + predicate + ", Object: " + object;
-    }
-
-
-    private String describeStatement(Statement statement) {
-        String subjectURI = statement.getSubject().getURI();
-        String[] subjectParts = subjectURI.split("/");
-        String subject = subjectParts[subjectParts.length - 1];
-
-        String predicateURI = statement.getPredicate().getURI();
-        String[] predicateParts = predicateURI.split("/");
-        String predicate = predicateParts[predicateParts.length - 1];
-
-        String object;
-        String literalValue;
-        RDFNode objectNode = statement.getObject();
-        if (objectNode.isLiteral()) {
-            literalValue = objectNode.toString();
-            String[] objectParts = literalValue.split("\\^\\^");
-            // Return the first part which contains the numeric value
-            object = objectParts[0];
-        } else if (objectNode instanceof Resource) {
-            Resource resource = (Resource) objectNode;
-            if (resource.isURIResource()) {
-                String objectURI = resource.getURI();
-                String[] objectParts = objectURI.split("/");
-                object = objectParts[objectParts.length - 1];
-            } else {
-                // Handle blank nodes or other resource types as needed
-                object = resource.toString();
-            }
-        } else {
-            // Handle other types of nodes if necessary
-            object = objectNode.toString();
-        }
-        return "Subject: " + subject + ", Predicate: " + predicate + ", Object: " + object;
-    }
-
+    // ------------------------------------------------------------
+    // Trace-Based Explanations
+    // ------------------------------------------------------------
 
     /**
      * Produces a single-sentence contextual explanation as to how the inputted statement
@@ -310,7 +87,7 @@ public class Explainer {
      * @param object: The statement's object. Can be a Literal, a Resource, or null as a wildcard
      * @return The traced-base explanation string
      */
-    public String GetFullTracedBaseExplanation_B(Object subject, Object property, Object object) {
+    public String GetFullTraceBasedExplanation(Object subject, Object property, Object object) {
         StringBuilder explanation = new StringBuilder("");
 
         InfModel model = generateInfModel(baseModel);
@@ -320,7 +97,7 @@ public class Explainer {
             Log.d("Explanation-Runner", "\t" + infStmts.next().toString());
         }
 
-        explanation.append(generateTraceBasedExplanation_B(this.baseModel, model, (Resource)subject,
+        explanation.append(generateTraceBasedExplanation(this.baseModel, model, (Resource)subject,
                 (Property) property, (RDFNode) object));
 
         return explanation.toString();
@@ -331,7 +108,7 @@ public class Explainer {
     // triple (subject : predicate : object). The base model (containing
     // triples not generated by the reasoner) is needed to check whether
     // a statement was generated by the reasoner or inputted by the user.
-    private String generateTraceBasedExplanation_B(Model baseModel, InfModel inf,
+    private String generateTraceBasedExplanation(Model baseModel, InfModel inf,
                                                  Resource subject, Property predicate, RDFNode object) {
         Log.d("Explanation-Runner", "\tGenerating Trace-Based Explanation...\n\t\t(" + subject + ", " + predicate + ", " + object + ")");
 
@@ -344,7 +121,7 @@ public class Explainer {
         while ( stmtItr.hasNext() )
         {
             Statement s = stmtItr.next();
-            answer += traceDerivation_B(inf, baseModel, s, 0) + "\n";
+            answer += traceDerivation(inf, baseModel, s, 0) + "\n";
             answer += "\n\n";
 
         }
@@ -357,7 +134,7 @@ public class Explainer {
     // the reasoner, the baseModel just contains the triples inputted by the user. The statement is the
     // triple that we are tracing back. Tabs specifies the formatting, and can be thought of as the "level"
     // in our model that we're in.
-    private String traceDerivation_B(InfModel infModel, Model baseModel, Statement statement, int tabs) {
+    private String traceDerivation(InfModel infModel, Model baseModel, Statement statement, int tabs) {
         String results = "";
 
         // Find the triples (matches) and rule that was used to
@@ -399,7 +176,7 @@ public class Explainer {
                         results += tabOffset(tabs) + " Match: " + describeStatement(s) + "\n";
 
                         // Recursively trace to find how the reasoner derived that statement.
-                        results += traceDerivation_B(infModel, baseModel, s, tabs+1) + "\n";
+                        results += traceDerivation(infModel, baseModel, s, tabs+1) + "\n";
                     }
                 } else {
                     Literal l = ResourceFactory.createTypedLiteral(obj.getLiteralValue().toString(), obj.getLiteralDatatype());
@@ -414,7 +191,7 @@ public class Explainer {
                         results += tabOffset(tabs) + " Match: " + describeStatement(s) + "\n";
 
                         // Recursively trace to find how the reasoner derived that statement.
-                        results += traceDerivation_B(infModel, baseModel, s, tabs+1) + "\n";
+                        results += traceDerivation(infModel, baseModel, s, tabs+1) + "\n";
                     }
                 }
             }
@@ -428,50 +205,11 @@ public class Explainer {
         return results;
     }
 
-    /**
-     * Produces a single-sentence contextual explanation as to how the inputted statement
-     * was derived by a reasoner.
-     * @param subject: The statement's subject. Must be a Resource, or null as a wildcard.
-     * @param property: The statement's property. Must be a Property, or null as a wildcard.
-     * @param object: The statement's object. Can be a Literal, a Resource, or null as a wildcard
-     * @return The traced-base explanation string
-     */
-    public String GetFullTracedBaseExplanation(Object subject, Object property, Object object) {
-        StringBuilder explanation = new StringBuilder("");
 
-        InfModel model = generateInfModel(baseModel);
 
-        explanation.append(generateTraceBasedExplanation(this.baseModel, model, (Resource)subject,
-                (Property) property, (RDFNode) object));
-
-        return explanation.toString();
-    }
-
-    /**
-     * Produces a single-sentence contextual explanation as to how the inputted statement
-     * was derived by a reasoner.
-     * @param resource The resource of the statement.
-     * @param property The property of the statement.
-     * @param object The object of the statement.
-     * @return
-     */
-    public String GetSimpleContextualExplanation(Object resource, Object property, Object object){
-        Log.d("Explanation-Runner", "\tGenerating Simple Contextual Explanation for (" + resource + ", " + property + ", " + object + ")");
-
-        StringBuilder explanation = new StringBuilder("");
-
-        InfModel model = generateInfModel(baseModel);
-        Log.d("Explanation-Runner", "\t\tGetSimpleContextualExplanation() Model:\n\t\t\t" + model);
-
-        StmtIterator itr = model
-                .listStatements((Resource)resource, (Property) property, (RDFNode) object);
-
-        while(itr.hasNext()){
-            explanation.append(generateSimpleContextualExplanation(itr.next(), model));
-            explanation.append("\n\n");
-        }
-        return explanation.toString();
-    }
+    // ------------------------------------------------------------
+    // Contextual Explanations
+    // ------------------------------------------------------------
 
     /**
      * Produces a brief user-readable contextual explanation of how the inputted statement was
@@ -501,42 +239,7 @@ public class Explainer {
 
         return explanation.toString();
     }
-    ///endregion
 
-    ///region Contextual Reasoning Helper Methods
-
-    /**
-     * Runs a reasoner on the Linked Data. Guarantees derivations are
-     * stored.
-     * @return The InfModel derived from the reasoner.
-     */
-    private InfModel generateInfModel(Model baseModel){
-        Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
-        reasoner.setDerivationLogging(true);
-        return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, baseModel);
-    }
-
-
-    /**
-     * Generates a statement using the URIS present in the triple.
-     * @param triple
-     * @return A basic statement
-     */
-    private Statement generateStatement(Triple triple){
-        Resource subject = ResourceFactory.createResource(triple.getSubject().getURI());
-        Property property = ResourceFactory.createProperty(triple.getPredicate().getURI());
-        Node obj = triple.getObject();
-        if (obj.isLiteral()){
-            Literal l = ResourceFactory.createTypedLiteral(obj.getLiteralValue().toString(), obj.getLiteralDatatype());
-            return ResourceFactory.createStatement(subject, property, l);
-        }
-        if (!obj.isLiteral()){
-            Resource matchObject = ResourceFactory.createResource(triple.getObject().getURI());
-            return ResourceFactory.createStatement(subject, property, matchObject);
-        }
-        // Should never reach here.
-        return null;
-    }
 
     /**
      * Generates a shallow Contextual explanation.
@@ -571,6 +274,34 @@ public class Explainer {
         explanation.append(")");
         return explanation.toString();
     }
+
+
+    /**
+     * Produces a single-sentence contextual explanation as to how the inputted statement
+     * was derived by a reasoner.
+     * @param resource The resource of the statement.
+     * @param property The property of the statement.
+     * @param object The object of the statement.
+     * @return
+     */
+    public String GetSimpleContextualExplanation(Object resource, Object property, Object object){
+        Log.d("Explanation-Runner", "\tGenerating Simple Contextual Explanation for (" + resource + ", " + property + ", " + object + ")");
+
+        StringBuilder explanation = new StringBuilder("");
+
+        InfModel model = generateInfModel(baseModel);
+        Log.d("Explanation-Runner", "\t\tGetSimpleContextualExplanation() Model:\n\t\t\t" + model);
+
+        StmtIterator itr = model
+                .listStatements((Resource)resource, (Property) property, (RDFNode) object);
+
+        while(itr.hasNext()){
+            explanation.append(generateSimpleContextualExplanation(itr.next(), model));
+            explanation.append("\n\n");
+        }
+        return explanation.toString();
+    }
+
 
     /**
      * Generates a simple contextual explanation for a statement, given the
@@ -609,9 +340,355 @@ public class Explainer {
         explanation.append(".");
         return explanation.toString();
     }
-    ///endregion
 
-    ///region Trace Explanation Helper Methods
+
+
+    // ------------------------------------------------------------
+    // Contrastive Explanations
+    // ------------------------------------------------------------
+
+    /**
+     * Generate counterfactual explanation for statement by comparing how this.baseModel reached the conclusion
+     * compared to how otherBaseModel differs (or match) the conclusion by using the same ruleSet, this.rules.
+     * Highlight the difference
+     * @param statement the statement (conclusion) to generate explanation
+     * @param otherBaseModel the other baseModel to compare this.baseModel to after apply this.rule to both
+     * @return The InfModel derived from the reasoner.
+     */
+    public String GetFullContrastiveExplanation_B(Statement statement, Model otherBaseModel){
+        InfModel thisInfModel = generateInfModel(baseModel);
+        InfModel otherInfModel = generateInfModel(otherBaseModel);
+        String results = "";
+        StmtIterator itr = thisInfModel.listStatements(statement.getSubject(), statement.getPredicate(), (RDFNode) null);
+        StmtIterator itr2 = otherInfModel.listStatements(statement.getSubject(), statement.getPredicate(), (RDFNode) null);
+
+        // Find the triples (matches) and rule that was used to assert this statement, if it exists in the infModel.
+        Iterator<Derivation> thisDerivItr = thisInfModel.getDerivation(statement);
+        Iterator<Derivation> otherDerivItr = otherInfModel.getDerivation(statement);
+
+        while (thisDerivItr.hasNext()) {
+            // This model derivation
+            RuleDerivation thisDerivation = (RuleDerivation) thisDerivItr.next();
+            RuleDerivation otherDerivation = null;
+
+            // Complete derivation match
+            if (otherDerivItr.hasNext()) {
+                otherDerivation = (RuleDerivation) otherDerivItr.next();
+            }
+            // Partial derivation match (same subject and predicate, but different object)
+            else if (itr2.hasNext()) {
+                Statement otherMatch = itr2.next();
+                otherDerivItr = otherInfModel.getDerivation(otherMatch);
+                otherDerivation = (RuleDerivation) otherDerivItr.next();
+            }
+            Triple thisConclusion = thisDerivation.getConclusion();
+            Triple otherConclusion = null;
+            if (otherDerivation != null)
+                otherConclusion = otherDerivation.getConclusion();
+
+            if (otherConclusion == null) {
+                results += "This model concluded: " + describeTriple(thisConclusion) + "\n";
+                results += "Alternate model didn't conclude anything.\n";
+                System.out.print(results);
+                return results;
+            } else if (thisConclusion.sameAs(otherConclusion.getSubject(),
+                    otherConclusion.getPredicate(),
+                    otherConclusion.getObject())) {
+                results += "Both model concluded: " + describeTriple(thisConclusion) + "\n";
+                for (Triple match : thisDerivation.getMatches()) {
+                    Statement matchStatement = generateStatement(match);
+                    results += GetFullContrastiveExplanation_B(matchStatement, otherBaseModel) + "\n";
+                }
+            } else {
+                results += "This model concluded: " + describeTriple(thisConclusion) + " using Matches: \n";
+                for (Triple match : thisDerivation.getMatches()) {
+                    Statement matchStatement = generateStatement(match);
+                    // results +=  " Match: " + describeStatement(matchStatement) + "\n";
+                    results +=  "  " + describeStatement(matchStatement) + "\n";
+                }
+                results += "Alternate model concluded: " + describeTriple(otherConclusion) + " instead using Matches: \n";
+                for (Triple match2 : otherDerivation.getMatches()) {
+                    Statement matchStatement = generateStatement(match2);
+                    // results += " Match: " + describeStatement(matchStatement) + "\n";
+                    results += "  " + describeStatement(matchStatement) + "\n";
+                }
+                // Recurse
+                for (Triple match : thisDerivation.getMatches()) {
+                    Statement matchStatement = generateStatement(match);
+                    if (!baseModel.contains(matchStatement)) {
+                        results += GetFullContrastiveExplanation_B(matchStatement, otherBaseModel) + "\n";
+                    }
+                }
+            }
+        }
+        return results;
+    }
+
+
+    // Helper method to describe a triple
+    private String describeTriple(Triple triple) {
+        // String subject = triple.getSubject().toString();
+        String subjectURI = triple.getSubject().getURI();
+        String[] subjectParts = subjectURI.split("/");
+        String subject = subjectParts[subjectParts.length - 1];
+
+        // String predicate = triple.getPredicate().toString();
+        String predicateURI = triple.getPredicate().getURI();
+        String[] predicateParts = predicateURI.split("/");
+        String predicate = predicateParts[predicateParts.length - 1];
+
+        String object;
+        if (triple.getObject().isLiteral()) {
+            String literalValue = triple.getObject().getLiteral().toString();
+            String[] objectParts = literalValue.split("\\^\\^");
+            // Return the first part which contains the numeric value
+            object = objectParts[0];
+        } else {
+            // object = triple.getObject().toString();
+            String objectURI = triple.getObject().getURI();
+            String[] objectParts = objectURI.split("/");
+            object = objectParts[objectParts.length - 1];
+        }
+        return "Subject: " + subject + " , Predicate: " + predicate + ", Object: " + object;
+    }
+
+
+    // Helper method to describe a statement
+    private String describeStatement(Statement statement) {
+        String subjectURI = statement.getSubject().getURI();
+        String[] subjectParts = subjectURI.split("/");
+        String subject = subjectParts[subjectParts.length - 1];
+
+        String predicateURI = statement.getPredicate().getURI();
+        String[] predicateParts = predicateURI.split("/");
+        String predicate = predicateParts[predicateParts.length - 1];
+
+        String object;
+        String literalValue;
+        RDFNode objectNode = statement.getObject();
+        if (objectNode.isLiteral()) {
+            literalValue = objectNode.toString();
+            String[] objectParts = literalValue.split("\\^\\^");
+            // Return the first part which contains the numeric value
+            object = objectParts[0];
+        } else if (objectNode instanceof Resource) {
+            Resource resource = (Resource) objectNode;
+            if (resource.isURIResource()) {
+                String objectURI = resource.getURI();
+                String[] objectParts = objectURI.split("/");
+                object = objectParts[objectParts.length - 1];
+            } else {
+                // Handle blank nodes or other resource types as needed
+                object = resource.toString();
+            }
+        } else {
+            // Handle other types of nodes if necessary
+            object = objectNode.toString();
+        }
+        return "Subject: " + subject + ", Predicate: " + predicate + ", Object: " + object;
+    }
+  
+
+
+    // ------------------------------------------------------------
+    // Counterfactual Explanation
+    // ------------------------------------------------------------
+
+    /**
+     * Generates a counterfactual explanation by comparing an instance to other instances
+     * with a desired outcome.
+     * 
+     * @param targetInstance The instance to generate explanation for
+     * @param outcomeProperty The property indicating the outcome (e.g., eligibility)
+     * @param feature1Property First feature to compare (e.g., credit score)
+     * @param feature2Property Second feature to compare (e.g., DTI ratio)
+     * @return A string explanation of what changes are needed
+     */
+    public String GetCounterfactualExplanation(
+            Resource targetInstance, 
+            Property outcomeProperty, 
+            Property feature1Property, 
+            Property feature2Property) {
+        
+        // Generate the inference model
+        InfModel infModel = generateInfModel(baseModel);
+        StringBuilder explanation = new StringBuilder();
+        
+        // Get target instance information
+        Statement outcome = getStatement(infModel, targetInstance, outcomeProperty);
+        Statement feature1 = getStatement(infModel, targetInstance, feature1Property);
+        Statement feature2 = getStatement(infModel, targetInstance, feature2Property);        
+        
+        // Log the target instance information (feature names and values)
+        String feature1Name = formatPropertyName(feature1Property.getLocalName());
+        String feature2Name = formatPropertyName(feature2Property.getLocalName());
+        logSubSection("Target Instance Details");
+        logDetail("Outcome: " + outcome.getObject().toString());
+        logDetail(feature1Name + ": " + feature1.getObject().toString());
+        logDetail(feature2Name + ": " + feature2.getObject().toString());
+        
+        // Append the target instance information (feature names and values) to the explanation
+        explanation.append("Current instance (").append(targetInstance.getLocalName()).append("):\n");
+        explanation.append(feature1Name + ": ").append(feature1.getObject().toString()).append("\n");
+        explanation.append(feature2Name + ": ").append(feature2.getObject().toString()).append("\n");
+        explanation.append("Outcome: ").append(outcome.getObject().toString()).append("\n\n");
+        
+        // Find instances with the desired outcome
+        logSubSection("Finding Similar Instances");
+        StmtIterator eligibleItr = infModel.listStatements(
+            null, 
+            outcomeProperty, 
+            ResourceFactory.createPlainLiteral("Eligible"));
+
+        double minDistance = Double.MAX_VALUE;
+        Resource nearestNeighbor = null;
+        Statement nearestFeature1 = null;
+        Statement nearestFeature2 = null;
+        
+        // Loop through all instances with the desired outcome
+        explanation.append("Comparing with other instances:\n");
+        while (eligibleItr.hasNext()) {
+            Statement eligibleStatement = eligibleItr.next();
+            Resource instance = eligibleStatement.getSubject();
+            
+            // Skip if it's the target instance
+            if (instance.equals(targetInstance)) continue;
+            
+            // Get the feature values for the current instance
+            Statement otherFeature1 = getStatement(infModel, instance, feature1Property);
+            Statement otherFeature2 = getStatement(infModel, instance, feature2Property);
+
+            // Calculate distance between current instance and target instance
+            double distance = calculateDistance(feature1, feature2, otherFeature1, otherFeature2);
+            
+            // Update the nearest neighbor if the distance is smaller
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestNeighbor = instance;
+                nearestFeature1 = otherFeature1;
+                nearestFeature2 = otherFeature2;
+            }
+            
+            // Log the instance information (feature names and values)
+            logDetail("Instance: " + instance.getLocalName());
+            logDetail("Feature 1: " + otherFeature1.getObject().toString());
+            logDetail("Feature 2: " + otherFeature2.getObject().toString());
+            logDetail("Distance: " + distance);
+            logDetail("");
+            
+            // Append the instance information (feature names and values) to the explanation
+            explanation.append("\nInstance ").append(instance.getLocalName()).append(":\n");
+            explanation.append("Feature 1: ").append(otherFeature1.getObject().toString()).append("\n");
+            explanation.append("Feature 2: ").append(otherFeature2.getObject().toString()).append("\n");
+            explanation.append("Distance: ").append(String.format("%.3f", distance)).append("\n");
+        }
+        
+        // Generate counterfactual explanation
+        if (nearestNeighbor != null) {
+            explanation.append("\nCounterfactual Explanation:\n");
+            explanation.append("To achieve the desired outcome like ").append(nearestNeighbor.getLocalName()).append(", you would need to:\n");
+            
+            // Compare feature values
+            double currentFeature1 = ((Literal)feature1.getObject()).getDouble();
+            double neighborFeature1 = ((Literal)nearestFeature1.getObject()).getDouble();
+            if (Math.abs(currentFeature1 - neighborFeature1) > 0.01) {  // Using 0.01 as threshold for feature value differences
+                explanation.append("- Change your ").append(feature1Name.toLowerCase())
+                          .append(" from ").append(currentFeature1)
+                          .append(" to ").append(neighborFeature1).append("\n");
+            }
+            
+            // Compare feature 2 values
+            double currentFeature2 = ((Literal)feature2.getObject()).getDouble();
+            double neighborFeature2 = ((Literal)nearestFeature2.getObject()).getDouble();
+            if (Math.abs(currentFeature2 - neighborFeature2) > 0.01) {  // Using 0.01 as threshold for feature value differences
+                explanation.append("- Change your ").append(feature2Name.toLowerCase())
+                          .append(" from ").append(currentFeature2)
+                          .append(" to ").append(neighborFeature2).append("\n");
+            }
+        } else {
+            explanation.append("\nNo similar instances found for comparison.\n");
+        }
+        
+        return explanation.toString();
+    }
+
+    /**
+     * Calculates the relative distance between two instances based on two features.
+     * Uses symmetric percentage difference and Euclidean distance.
+     * 
+     * @param feature1A First feature of instance A
+     * @param feature2A Second feature of instance A
+     * @param feature1B First feature of instance B
+     * @param feature2B Second feature of instance B
+     * @return A distance measure between the two instances
+     */
+    private double calculateDistance(Statement feature1A, Statement feature2A, 
+                                   Statement feature1B, Statement feature2B) {
+        try {
+            // Extract numeric values
+            double value1A = ((Literal)feature1A.getObject()).getDouble();
+            double value1B = ((Literal)feature1B.getObject()).getDouble();
+            double value2A = ((Literal)feature2A.getObject()).getDouble();
+            double value2B = ((Literal)feature2B.getObject()).getDouble();
+            
+            // Calculate relative differences for each feature
+            double feature1Distance = Math.abs((value1A - value1B) / ((value1A + value1B) / 2));
+            double feature2Distance = Math.abs((value2A - value2B) / ((value2A + value2B) / 2));
+            
+            // Return Euclidean distance of relative differences
+            return Math.sqrt(Math.pow(feature1Distance, 2) + Math.pow(feature2Distance, 2));
+            
+        } catch (Exception e) {
+            Log.e("Explainer", "Error calculating distance: " + e.getMessage());
+            return Double.MAX_VALUE; // Return maximum distance if calculation fails
+        }
+    }
+
+
+
+    // ------------------------------------------------------------
+    // Utility Methods
+    // ------------------------------------------------------------
+
+    /**
+     * Runs a reasoner on the Linked Data. Guarantees derivations are
+     * stored.
+     * @return The InfModel derived from the reasoner.
+     */
+    private InfModel generateInfModel(Model baseModel){
+        Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
+        reasoner.setDerivationLogging(true);
+        return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, baseModel);
+    }
+
+    /**
+     * Generates a statement using the URIS present in the triple.
+     * @param triple
+     * @return A basic statement
+     */
+    private Statement generateStatement(Triple triple){
+        Resource subject = ResourceFactory.createResource(triple.getSubject().getURI());
+        Property property = ResourceFactory.createProperty(triple.getPredicate().getURI());
+        Node obj = triple.getObject();
+        if (obj.isLiteral()){
+            Literal l = ResourceFactory.createTypedLiteral(obj.getLiteralValue().toString(), obj.getLiteralDatatype());
+            return ResourceFactory.createStatement(subject, property, l);
+        }
+        if (!obj.isLiteral()){
+            Resource matchObject = ResourceFactory.createResource(triple.getObject().getURI());
+            return ResourceFactory.createStatement(subject, property, matchObject);
+        }
+        // Should never reach here.
+        return null;
+    }
+
+    private Statement getStatement(InfModel model, Resource subject, Property predicate) {
+        StmtIterator itr = model.listStatements(subject, predicate, (RDFNode)null);
+        if (itr.hasNext()) {
+            return itr.next();
+        }
+        return null;
+    }
 
     // returns a string with @num tabs in it
     private String tabOffset(int num) {
@@ -622,101 +699,36 @@ public class Explainer {
         return tab;
     }
 
-    // A recursive function that traces through the infModel to determine how the statement was generated
-    // by a reasoner, if at all. infModel contains the full RDF model including the triples generated by
-    // the reasoner, the baseModel just contains the triples inputted by the user. The statement is the
-    // triple that we are tracing back. Tabs specifies the formatting, and can be thought of as the "level"
-    // in our model that we're in.
-    private String traceDerivation(InfModel infModel, Model baseModel, Statement statement, int tabs) {
-        String results = "";
+    private void logSubSection(String message) {
+        Log.d("Explainer", "--------------------------------------------------");
+        Log.d("Explainer", message);
+        Log.d("Explainer", "--------------------------------------------------");
+    }
 
-        // Find the triples (matches) and rule that was used to
-        // assert this statement, if it exists in the infModel.
-        Iterator<Derivation> derivItr = infModel.getDerivation(statement);
-        while(derivItr.hasNext()) {
+    private void logDetail(String message) {
+        Log.d("Explainer", "\t" + message);
+    }
 
-            // Should be the same as statement.
-            // Multiple are possible if a wildcard is used within statement.
-            RuleDerivation derivation = (RuleDerivation) derivItr.next();
-
-            // The concluded triple:
-            Triple conclusion = derivation.getConclusion();
-            results += (tabOffset(tabs) + "Conclusion: " + conclusion.toString() + " used the following matches: \n");
-
-            // Goes through the triples that were "matched" with the rule that was fired to
-            // generate the concluded triple.
-            for (Triple match : derivation.getMatches()) {
-
-                // Use the URIs to generate a statement, so we can search the base model for the statement.
-                Resource matchResource = ResourceFactory.createResource(match.getSubject().getURI());
-                Property matchProperty = ResourceFactory.createProperty(match.getPredicate().getURI());
-
-                Node obj = match.getObject();
-
-                if (!obj.isLiteral()) {
-                    Resource matchObject = ResourceFactory.createResource(match.getObject().getURI());
-
-                    Statement s = ResourceFactory.createStatement(matchResource, matchProperty, matchObject);
-
-                    // If the match was added by the user, we don't need to trace through how the reasoner derived
-                    // that statement, since the user added it themselves...
-                    if (baseModel.contains(s)) {
-                        results += tabOffset(tabs) + " Match: " + s.toString() + " was asserted by the user\n";
-                    }
-
-                    // Assuming it's not in the base model, then the reasoner must have derived that statement...
-                    if (!baseModel.contains(s)) {
-                        results += tabOffset(tabs) + " Match: " + s.toString() + " was asserted by the reasoner.\n";
-
-                        // Recursively trace to find how the reasoner derived that statement.
-                        results += traceDerivation(infModel, baseModel, s, tabs+1) + "\n";
-                    }
+    /**
+     * Formats a property name from snake_case to Title Case
+     * e.g., "credit_score" -> "Credit Score"
+     */
+    private String formatPropertyName(String propertyName) {
+        String[] words = propertyName.split("_");
+        StringBuilder formatted = new StringBuilder();
+        for (String word : words) {
+            if (word.length() > 0) {
+                // Special case for abbreviations like DTI
+                if (word.length() <= 3) {
+                    formatted.append(word.toUpperCase());
                 } else {
-                    Literal l = ResourceFactory.createTypedLiteral(obj.getLiteralValue().toString(), obj.getLiteralDatatype());
-                    Statement s = ResourceFactory.createStatement(matchResource, matchProperty, l);
-
-                    if (baseModel.contains(s)) {
-                        results += tabOffset(tabs) + " Match: " + s.toString() + " was asserted by the user\n";
-                    }
-
-                    // Assuming it's not in the base model, then the reasoner must have derived that statement...
-                    if (!baseModel.contains(s)) {
-                        results += tabOffset(tabs) + " Match: " + s.toString() + " was asserted by the reasoner.\n";
-
-                        // Recursively trace to find how the reasoner derived that statement.
-                        results += traceDerivation(infModel, baseModel, s, tabs+1) + "\n";
-                    }
+                    formatted.append(Character.toUpperCase(word.charAt(0)))
+                            .append(word.substring(1).toLowerCase());
                 }
+                formatted.append(" ");
             }
-
-            // After going through the matches, we now print the rule that the matches matched to.
-            results += tabOffset(tabs) + "And paired them with the following rule: \n" ;
-            results += tabOffset(tabs) + derivation.getRule().toString() + "\n";
-            results += tabOffset(tabs) + "to reach this conclusion.\n";
-
         }
-        return results;
+        return formatted.toString().trim();
     }
-
-    // Use the generated inf model, to provide a deep trace for a
-    // triple (subject : predicate : object). The base model (containing
-    // triples not generated by the reasoner) is needed to check whether
-    // a statement was generated by the reasoner or inputted by the user.
-    private String generateTraceBasedExplanation(Model baseModel, InfModel inf,
-                                                 Resource subject, Property predicate, RDFNode object) {
-        Log.d("Explanation-Runner", "Generating Trace-Based Explanation...\n\t(" + subject + ", " + predicate + ", " + object + ")");
-
-        String answer = "";
-        StmtIterator stmtItr = inf.listStatements(subject, predicate, object);
-        while ( stmtItr.hasNext() )
-        {
-            Statement s = stmtItr.next();
-            answer += traceDerivation(inf, baseModel, s, 0) + "\n";
-            answer += "\n\n";
-
-        }
-        return answer;
-    }
-    //endregion
 
 }

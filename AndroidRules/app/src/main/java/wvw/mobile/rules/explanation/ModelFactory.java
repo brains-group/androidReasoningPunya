@@ -1,65 +1,77 @@
 package wvw.mobile.rules.explanation;
 
+// Java Standard Libraries
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+// Apache Jena Libraries
 import com.hp.hpl.jena.rdf.model.InfModel;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Literal;
+import com.hp.hpl.jena.reasoner.Reasoner;
 import com.hp.hpl.jena.reasoner.rulesys.GenericRuleReasoner;
 import com.hp.hpl.jena.reasoner.rulesys.Rule;
-import com.hp.hpl.jena.reasoner.Reasoner;
 import com.hp.hpl.jena.util.PrintUtil;
 import com.hp.hpl.jena.vocabulary.RDF;
 
+// Android Libraries
 import android.content.Context;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.InputStream;
-
 import android.content.res.AssetManager;
 
 
 public class ModelFactory {
+
+    // ============================================================================
+    // Shared Resources and URIs
+    // ============================================================================
+
     // Global URI
     private static String ex  = "http://example.com/";
-
-    // Related to FoodRecommendation Tutorial and Loan Eligibility Model
-    private static String rdfURI = RDF.getURI();
     private static String schemaURI = "http://schema.org/";
-    private static String ateURI      = ex + "ate";
+    private static String rdfURI = RDF.getURI();
+    private static String foaf = "http://xmlns.com/foaf/0.1/";
+
+    // Commonly Used URIs
+    private static String personURI = foaf + "Person";
     private static String observationURI = schemaURI + "Observation";
-    private static String weightURI = schemaURI + "weight";
+    private static String valueURI = schemaURI + "value";
     private static String unitURI = schemaURI + "unitText";
+    private static String nameURI = ex + "name";
+
+    // ============================================================================
+    // Food Recommendation Model Resources
+    // ============================================================================
+
+    private static String ateURI      = ex + "ate";
+    private static String weightURI = schemaURI + "weight";
     private static String variableMeasuredURI = schemaURI + "variableMeasured";
+    private static String usdaURI = "http://idea.rpi.edu/heals/kb/usda-ontology#";
+
+    // ============================================================================
+    // Loan Eligibility Model Resources
+    // ============================================================================
+
     private static String incomeURI = ex + "income";
     private static String debtURI = ex + "debt";
     private static String creditScoreURI = ex + "creditScore";
-    private static String valueURI = schemaURI + "value";
     private static String loanEligibilityURI = ex + "loanEligibility";
 
-    private static String foaf = "http://xmlns.com/foaf/0.1/";
-    private static String personURI = foaf + "Person";
+    // ============================================================================
+    // Getter Methods for URIs
+    // ============================================================================
 
-    private static String nameURI = ex + "name";
-    private static String usdaURI = "http://idea.rpi.edu/heals/kb/usda-ontology#";
+    public static String getGlobalURI() {return ex;}
 
-    public static String getGlobalURI() {
-        return ex;
-    }
+    public static String getPersonURI() {return personURI;}
 
-    public static String getPersonURI() {
-        return personURI;
-    }
-
-    public static String getObservavtionURI() {
-        return observationURI;
-    }
+    public static String getObservavtionURI() {return observationURI;}
 
     public static String getIncomeURI() {return incomeURI;}
 
@@ -69,6 +81,11 @@ public class ModelFactory {
 
     public static String getLoanEligibilityURI() {return loanEligibilityURI;}
 
+    // ============================================================================
+    // Transitive Model Methods
+    // ============================================================================
+
+    // Creates a simple transitive model with resources A, B, C, D and property ex:equals   
     public static Model getTransitiveBaseModel() {
 
         Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
@@ -88,6 +105,7 @@ public class ModelFactory {
         return model;
     }
 
+    // Creates an inference model with transitive reasoning over the ex:equals property
     public static InfModel getTransitiveInfModel() {
         Model model = getTransitiveBaseModel();
         PrintUtil.registerPrefix("ex", ex);
@@ -101,6 +119,13 @@ public class ModelFactory {
         return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, model);
     }
 
+
+
+    // ============================================================================
+    // Food Recommendation Model Methods
+    // ============================================================================
+
+    // Creates the base model for the Food Recommendation model
     public static Model getFoodRecommendationBaseModel() {
         // Creating the model used in FoodRecommendation tutorial with Person, Observe:eat usda:Apple
         Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
@@ -138,103 +163,7 @@ public class ModelFactory {
         return model;
     }
 
-//    public static Model getLoanEligibilityBaseModel() {
-//        // Creating the model for loan eligibility with Person, Income, Debt, CreditScore
-//        Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
-//
-//        // Add namespace prefixes
-//        model.setNsPrefix("schema", "http://schema.org/");  // Add schema.org prefix
-//        model.setNsPrefix("ex", "http://example.com/");
-//        model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
-//
-//        // Create the resources
-//        Resource applicant = model.createResource(personURI);
-//        Resource income = model.createResource(incomeURI);
-//        Resource debt = model.createResource(debtURI);
-//        Resource creditScore = model.createResource(creditScoreURI);
-//
-//        // Create properties
-//        Property hasValueProperty = model.createProperty(valueURI);
-//        Property hasUnitProperty = model.createProperty(unitURI);
-//        Property creditScoreProperty = model.createProperty(creditScoreURI);
-//        Property typeProperty = model.createProperty(rdfURI + "type");
-//        Property nameProperty = model.createProperty(nameURI); // Property for applicant's name
-//
-//        // Create literals
-//        Literal monthlyIncome = model.createTypedLiteral(new BigDecimal(5000)); // Monthly income in dollars
-//        Literal monthlyDebt = model.createTypedLiteral(new BigDecimal(1500)); // Monthly debt in dollars
-//        Literal creditScoreValue = model.createTypedLiteral(new Integer(700)); // Credit score as integer
-//        String dollars = "USD"; // Unit of currency (dollars)
-//        String scoreUnit = "integer"; // Unit for credit score
-//        String applicantName = "Alex"; // Name "Alex"
-//
-//        // Add statements
-//        applicant.addProperty(typeProperty, applicant);
-//        applicant.addProperty(nameProperty, applicantName); // Add name property with value "Alex" to the applicant
-//        income.addLiteral(hasValueProperty, monthlyIncome);
-//        income.addProperty(hasUnitProperty, dollars);
-//        debt.addLiteral(hasValueProperty, monthlyDebt);
-//        debt.addProperty(hasUnitProperty, dollars);
-//        creditScore.addLiteral(hasValueProperty, creditScoreValue);
-//        creditScore.addProperty(hasUnitProperty, scoreUnit);
-//
-//        // Add properties linking applicant to income, debt, and credit score
-//        applicant.addProperty(model.createProperty(incomeURI), income);
-//        applicant.addProperty(model.createProperty(debtURI), debt);
-//        applicant.addProperty(creditScoreProperty, creditScore);
-//
-//        return model;
-//    }
-
-    public static Model getLoanEligibilityBaseModel() {
-        // Creating the model for loan eligibility with Person, Income, Debt, CreditScore
-        Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
-
-        // Add namespace prefixes
-        model.setNsPrefix("schema", "http://schema.org/");  // Add schema.org prefix
-        model.setNsPrefix("ex", "http://example.com/");
-        model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
-
-        // Create the resources
-        Resource applicant = model.createResource(personURI);
-        Resource income = model.createResource(incomeURI);
-        Resource debt = model.createResource(debtURI);
-        Resource creditScore = model.createResource(creditScoreURI);
-
-        // Create properties
-        Property hasValueProperty = model.createProperty(valueURI);
-        Property hasUnitProperty = model.createProperty(unitURI);
-        Property creditScoreProperty = model.createProperty(creditScoreURI);
-        Property typeProperty = model.createProperty(rdfURI + "type");
-        Property nameProperty = model.createProperty(nameURI); // Property for applicant's name
-
-        // Create literals
-        Literal monthlyIncome = model.createTypedLiteral(new BigDecimal(5000)); // Monthly income in dollars
-        Literal monthlyDebt = model.createTypedLiteral(new BigDecimal(1500)); // Monthly debt in dollars
-        Literal creditScoreValue = model.createTypedLiteral(new Integer(700)); // Credit score as integer
-        String dollars = "USD"; // Unit of currency (dollars)
-        String scoreUnit = "integer"; // Unit for credit score
-        String applicantName = "Alex"; // Name "Alex"
-
-        // Add statements
-        applicant.addProperty(typeProperty, applicant);
-        applicant.addProperty(nameProperty, applicantName); // Add name property with value "Alex" to the applicant
-        income.addLiteral(hasValueProperty, monthlyIncome);
-        income.addProperty(hasUnitProperty, dollars);
-        debt.addLiteral(hasValueProperty, monthlyDebt);
-        debt.addProperty(hasUnitProperty, dollars);
-        creditScore.addLiteral(hasValueProperty, creditScoreValue);
-        creditScore.addProperty(hasUnitProperty, scoreUnit);
-
-        // Add properties linking applicant to income, debt, and credit score
-        applicant.addProperty(model.createProperty(incomeURI), income);
-        applicant.addProperty(model.createProperty(debtURI), debt);
-        applicant.addProperty(creditScoreProperty, creditScore);
-
-        return model;
-    }
-
-
+    // Creates the rules for the Food Recommendation model
     public static String getFoodRecommendationRules() {
         String rule1 = "[rule1: ";
         rule1 += "( ?var schema:weight ?weight ) ";
@@ -274,6 +203,7 @@ public class ModelFactory {
         return rule1 + " " + rule2 + " " + rule3 + " " + rule4;
     }
 
+    // Creates the rules for the Food Recommendation model with prefixes
     public static String getFoodRecommendationRulesPrefix() {
         // Define prefixes as constants to avoid errors
         String schemaPrefix = "http://schema.org/";
@@ -315,69 +245,7 @@ public class ModelFactory {
         return rule1 + " " + rule2 + " " + rule3 + " " + rule4;
     }
 
-    // public static String getLoanEligibilityRules() {
-    //     String rule1 = "[rule1: ";
-    //     rule1 += "( ?applicant <http://schema.org/income> ?monthlyIncome ) ";
-    //     rule1 += "( ?applicant <http://schema.org/debt> ?monthlyDebt ) ";
-    //     rule1 += "quotient(?monthlyDebt, ?monthlyIncome, ?debtToIncomeRatio) ";
-    //     rule1 += "-> (?applicant <http://example.com/debtToIncomeRatio> ?debtToIncomeRatio) ";
-    //     rule1 += "]";
-
-    //     String rule2 = "[rule2: ";
-    //     rule2 += "( ?applicant <http://schema.org/creditScore> ?creditScore ) ";
-    //     rule2 += "( ?applicant <http://example.com/debtToIncomeRatio> ?debtToIncomeRatio ) ";
-    //     rule2 += "lessThanOrEqual(?debtToIncomeRatio, '0.35'^^xsd:float) ";
-    //     rule2 += "greaterThanOrEqual(?creditScore, '620'^^xsd:integer) ";
-    //     rule2 += "-> (?applicant <http://example.com/loanEligibility> \"Eligible\")";
-    //     rule2 += "]";
-
-    //     String rule3 = "[rule3: ";
-    //     rule3 += "( ?applicant <http://example.com/debtToIncomeRatio> ?debtToIncomeRatio ) ";
-    //     rule3 += "( ?applicant <http://schema.org/creditScore> ?creditScore ) ";
-    //     rule3 += "not(lessThanOrEqual(?debtToIncomeRatio, '0.35'^^xsd:float)) ";
-    //     rule3 += "or(not(greaterThanOrEqual(?creditScore, '620'^^xsd:integer))) ";
-    //     rule3 += "-> (?applicant <http://example.com/loanEligibility> \"Not Eligible\")";
-    //     rule3 += "]";
-
-    //     return rule1 + " " + rule2 + " " + rule3;
-    // }
-
-    public static String getLoanEligibilityRules() {
-        String rules = "[rule1: "
-        + "(?applicant http://example.com/income ?incomeNode) "
-        + "(?incomeNode http://schema.org/value ?monthlyIncome) "
-        + "(?applicant http://example.com/debt ?debtNode) "
-        + "(?debtNode http://schema.org/value ?monthlyDebt) "
-        + "product(?monthlyDebt, '1.0'^^xsd:float, ?debtFloat) "
-        + "product(?monthlyIncome, '1.0'^^xsd:float, ?incomeFloat) "
-        + "quotient(?debtFloat, ?incomeFloat, ?ratio) "
-        + "-> "
-        + "(?applicant http://example.com/debtToIncomeRatio ?ratio)"
-        + "]"
-        + "\n"
-        + "[rule2: "
-        + "(?applicant http://example.com/creditScore ?scoreNode) "
-        + "(?scoreNode http://schema.org/value ?creditScore) "
-        + "(?applicant http://example.com/debtToIncomeRatio ?ratio) "
-        + "lessThan(?ratio, '0.35'^^xsd:float) "
-        + "greaterThan(?creditScore, '620'^^xsd:int) "
-        + "-> "
-        + "(?applicant http://example.com/loanEligibility \"Eligible\")"
-        + "]"
-        + "\n"
-        + "[rule3: "
-        + "(?applicant http://example.com/debtToIncomeRatio ?ratio) "
-        + "(?applicant http://example.com/creditScore ?scoreNode) "
-        + "(?scoreNode http://schema.org/value ?creditScore) "
-        + "ge(?ratio, '0.35'^^xsd:float) "
-        + "-> "
-        + "(?applicant http://example.com/loanEligibility \"Not Eligible\")"
-        + "]";
-
-        return rules;
-    }
-
-
+    // Creates the inference model for the Food Recommendation model
     public static InfModel getFoodRecommendationInfModel() {
         Model baseModel = getFoodRecommendationBaseModel();
 
@@ -388,22 +256,6 @@ public class ModelFactory {
         PrintUtil.registerPrefix("ex", ex);
         PrintUtil.registerPrefix("foaf", foaf);
 
-        // String rule1 = "[rule1: ";
-        // rule1 += "( ?var schema:weight ?weight ) ";
-        // rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
-        // rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
-        // rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
-        // rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
-        // rule1 += "-> (?var ex:sugars ?sugars)";
-        // rule1 += "]";
-        // String rule2 = "[rule2: ";
-        // rule2 += "( ?user rdf:type foaf:Person) ";
-        // rule2 += "( ?user ex:ate ?food) ";
-        // rule2 += "( ?food ex:sugars ?sugar) ";
-        // rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
-        // rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
-        // rule2 += "]";
-
         String rules = getFoodRecommendationRulesPrefix();
 
         Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
@@ -412,51 +264,7 @@ public class ModelFactory {
         return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, baseModel);
     }
 
-    public static InfModel getLoanEligibilityInfModel() {
-        // Get the base model that defines the applicant's data (income, debt, credit score)
-        Model baseModel = getLoanEligibilityBaseModel();
-
-        // Register prefixes for easier output
-        PrintUtil.registerPrefix("schema", schemaURI);
-        PrintUtil.registerPrefix("rdf", rdfURI);
-        PrintUtil.registerPrefix("ex", ex);
-
-        // // Define the loan eligibility rules
-        // String rule1 = "[rule1: ";
-        // rule1 += "( ?applicant schema:income ?monthlyIncome ) ";
-        // rule1 += "( ?applicant schema:debt ?monthlyDebt ) ";
-        // rule1 += "quotient(?monthlyDebt, ?monthlyIncome, ?debtToIncomeRatio) ";
-        // rule1 += "-> (?applicant ex:debtToIncomeRatio ?debtToIncomeRatio) ";
-        // rule1 += "]";
-
-        // String rule2 = "[rule2: ";
-        // rule2 += "( ?applicant schema:creditScore ?creditScore ) ";
-        // rule2 += "( ?applicant ex:debtToIncomeRatio ?debtToIncomeRatio ) ";
-        // rule2 += "lessThanOrEqual(?debtToIncomeRatio, '0.35'^^http://www.w3.org/2001/XMLSchema#float) ";
-        // rule2 += "greaterThanOrEqual(?creditScore, '620'^^http://www.w3.org/2001/XMLSchema#integer) ";
-        // rule2 += "-> (?applicant ex:loanEligibility \"Eligible\")";
-        // rule2 += "]";
-
-        // String rule3 = "[rule3: ";
-        // rule3 += "( ?applicant ex:debtToIncomeRatio ?debtToIncomeRatio ) ";
-        // rule3 += "( ?applicant schema:creditScore ?creditScore ) ";
-        // rule3 += "not(lessThanOrEqual(?debtToIncomeRatio, '0.35'^^http://www.w3.org/2001/XMLSchema#float)) ";
-        // rule3 += "or(not(greaterThanOrEqual(?creditScore, '620'^^http://www.w3.org/2001/XMLSchema#integer))) ";
-        // rule3 += "-> (?applicant ex:loanEligibility \"Not Eligible\")";
-        // rule3 += "]";
-
-        // Combine the rules
-        String rules = getLoanEligibilityRules();
-
-        // Create a reasoner using the rules and apply it to the base model
-        Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
-        reasoner.setDerivationLogging(true);
-
-        // Return the inference model
-        return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, baseModel);
-    }
-
-
+    // Creates the base model for the Food Recommendation model with banana
     public static Model getFoodRecommendationBaseModelBanana() {
         // creating the model used in FoodRecommendation tutorial with Person, Observe:eat usda:Apple
         Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
@@ -485,6 +293,177 @@ public class ModelFactory {
         return model;
     }
 
+    // Creates the inference model for the Food Recommendation model with banana
+    public static InfModel getFoodRecommendationInfModelBanana() {
+        Model baseModel = getFoodRecommendationBaseModelBanana();
+
+        // Create the ruleset from FoodRecommendation tutorial
+        PrintUtil.registerPrefix("schema", schemaURI);
+        PrintUtil.registerPrefix("usda", usdaURI);
+        PrintUtil.registerPrefix("rdf", rdfURI);
+        PrintUtil.registerPrefix("ex", ex);
+        PrintUtil.registerPrefix("foaf", foaf);
+
+        // https://jena.apache.org/documentation/inference/#RULEsyntax for specifics on rule syntax
+        String rule1 = "[rule1: ";
+        rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
+        rule1 += "( ?foodstuff schema:weight ?weight ) ";
+        rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
+        rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
+        rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
+        rule1 += "-> (?var ex:sugars ?sugars)";
+        rule1 += "]";
+        String rule2 = "[rule2: ";
+        rule2 += "( ?user rdf:type foaf:Person) ";
+        rule2 += "( ?user ex:ate ?food) ";
+        rule2 += "( ?food ex:sugars ?sugar) ";
+        rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
+        rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
+        rule2 += "]";
+
+        String rules = rule1 + " " + rule2;
+
+        Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
+
+        reasoner.setDerivationLogging(true);
+        InfModel infModel = com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, baseModel);
+        return infModel;
+    }
+
+
+
+    // ============================================================================
+    // Loan Eligibility Model Methods
+    // ============================================================================
+
+    // Creates the base model for the Loan Eligibility model
+    public static Model getLoanEligibilityBaseModel() {
+        Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
+    
+        // Common resources
+        Resource personType = model.createResource("http://xmlns.com/foaf/0.1/Person");
+        Property nameProperty = model.createProperty("http://example.com/name");
+        Property creditScoreProperty = model.createProperty("http://example.com/creditScore");
+        Property debtToIncomeProperty = model.createProperty("http://example.com/debtToIncomeRatio");
+        Property loanEligibilityProperty = model.createProperty("http://example.com/loanEligibility");
+        
+        // Create applicants
+        Resource applicant1 = model.createResource("http://example.com/applicant1", personType);
+        Resource applicant2 = model.createResource("http://example.com/applicant2", personType);
+        Resource applicant3 = model.createResource("http://example.com/applicant3", personType);
+        
+        // Applicant 1 - Not Eligible
+        applicant1.addProperty(nameProperty, "Alex")
+                .addLiteral(creditScoreProperty, 630)
+                .addLiteral(debtToIncomeProperty, 0.4)
+                .addLiteral(loanEligibilityProperty, "Not Eligible");
+        
+        // Applicant 2 - Eligible
+        applicant2.addProperty(nameProperty, "Beth")
+                .addLiteral(creditScoreProperty, 620)
+                .addLiteral(debtToIncomeProperty, 0.2)
+                .addLiteral(loanEligibilityProperty, "Eligible");
+        
+        // Applicant 3 - Eligible
+        applicant3.addProperty(nameProperty, "Charlie")
+                .addLiteral(creditScoreProperty, 635)
+                .addLiteral(debtToIncomeProperty, 0.3)
+                .addLiteral(loanEligibilityProperty, "Eligible");
+        
+        return model;
+    }
+
+    // // Creates the rules for the Loan Eligibility model
+    // public static String getLoanEligibilityRules() {
+    //     String rules = "[rule1: "
+    //     + "(?applicant http://example.com/income ?incomeNode) "
+    //     + "(?incomeNode http://schema.org/value ?monthlyIncome) "
+    //     + "(?applicant http://example.com/debt ?debtNode) "
+    //     + "(?debtNode http://schema.org/value ?monthlyDebt) "
+    //     + "product(?monthlyDebt, '1.0'^^xsd:float, ?debtFloat) "
+    //     + "product(?monthlyIncome, '1.0'^^xsd:float, ?incomeFloat) "
+    //     + "quotient(?debtFloat, ?incomeFloat, ?ratio) "
+    //     + "-> "
+    //     + "(?applicant http://example.com/debtToIncomeRatio ?ratio)"
+    //     + "]"
+    //     + "\n"
+    //     + "[rule2: "
+    //     + "(?applicant http://example.com/creditScore ?scoreNode) "
+    //     + "(?scoreNode http://schema.org/value ?creditScore) "
+    //     + "(?applicant http://example.com/debtToIncomeRatio ?ratio) "
+    //     + "lessThan(?ratio, '0.35'^^xsd:float) "
+    //     + "greaterThan(?creditScore, '620'^^xsd:int) "
+    //     + "-> "
+    //     + "(?applicant http://example.com/loanEligibility \"Eligible\")"
+    //     + "]"
+    //     + "\n"
+    //     + "[rule3: "
+    //     + "(?applicant http://example.com/debtToIncomeRatio ?ratio) "
+    //     + "(?applicant http://example.com/creditScore ?scoreNode) "
+    //     + "(?scoreNode http://schema.org/value ?creditScore) "
+    //     + "ge(?ratio, '0.35'^^xsd:float) "
+    //     + "-> "
+    //     + "(?applicant http://example.com/loanEligibility \"Not Eligible\")"
+    //     + "]";
+
+    //     return rules;
+    // }
+
+    // Creates the rules for the Loan Eligibility model
+    public static String getLoanEligibilityRules() {
+        String rules = "[rule1: "
+            + "(?applicant rdf:type http://xmlns.com/foaf/0.1/Person) "
+            + "(?applicant http://example.com/creditScore ?score) "
+            + "(?applicant http://example.com/debtToIncomeRatio ?dti) "
+            + "lessThan(?dti, '0.35'^^xsd:float) "
+            + "greaterThan(?score, '600'^^xsd:int) "
+            + "-> "
+            + "(?applicant http://example.com/loanEligibility \"Eligible\")"
+            + "]"
+            + "\n"
+            + "[rule2: "
+            + "(?applicant rdf:type http://xmlns.com/foaf/0.1/Person) "
+            + "(?applicant http://example.com/creditScore ?score) "
+            + "(?applicant http://example.com/debtToIncomeRatio ?dti) "
+            + "ge(?dti, '0.35'^^xsd:float) "
+            + "-> "
+            + "(?applicant http://example.com/loanEligibility \"Not Eligible\")"
+            + "]"
+            + "\n"
+            + "[rule3: "
+            + "(?applicant rdf:type http://xmlns.com/foaf/0.1/Person) "
+            + "(?applicant http://example.com/creditScore ?score) "
+            + "(?applicant http://example.com/debtToIncomeRatio ?dti) "
+            + "lessThan(?score, '600'^^xsd:int) "
+            + "-> "
+            + "(?applicant http://example.com/loanEligibility \"Not Eligible\")"
+            + "]";
+    
+        return rules;
+    }
+
+    // Creates the inference model for the Loan Eligibility model
+    public static InfModel getLoanEligibilityInfModel() {
+        // Get the base model that defines the applicant's data (income, debt, credit score)
+        Model baseModel = getLoanEligibilityBaseModel();
+
+        // Register prefixes for easier output
+        PrintUtil.registerPrefix("schema", schemaURI);
+        PrintUtil.registerPrefix("rdf", rdfURI);
+        PrintUtil.registerPrefix("ex", ex);
+
+        // Combine the rules
+        String rules = getLoanEligibilityRules();
+
+        // Create a reasoner using the rules and apply it to the base model
+        Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
+        reasoner.setDerivationLogging(true);
+
+        // Return the inference model
+        return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, baseModel);
+    }
+
+    // Creates the base model for the Loan Eligibility model (second type)
     public static Model getLoanEligibilityBaseModelSecondType() {
         // Creating the model for loan eligibility (second type) with Person, Income, Debt, CreditScore
         Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
@@ -527,42 +506,7 @@ public class ModelFactory {
     }
 
 
-    public static InfModel getFoodRecommendationInfModelBanana() {
-        Model baseModel = getFoodRecommendationBaseModelBanana();
-
-        // Create the ruleset from FoodRecommendation tutorial
-        PrintUtil.registerPrefix("schema", schemaURI);
-        PrintUtil.registerPrefix("usda", usdaURI);
-        PrintUtil.registerPrefix("rdf", rdfURI);
-        PrintUtil.registerPrefix("ex", ex);
-        PrintUtil.registerPrefix("foaf", foaf);
-
-        // https://jena.apache.org/documentation/inference/#RULEsyntax for specifics on rule syntax
-        String rule1 = "[rule1: ";
-        rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
-        rule1 += "( ?foodstuff schema:weight ?weight ) ";
-        rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
-        rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
-        rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
-        rule1 += "-> (?var ex:sugars ?sugars)";
-        rule1 += "]";
-        String rule2 = "[rule2: ";
-        rule2 += "( ?user rdf:type foaf:Person) ";
-        rule2 += "( ?user ex:ate ?food) ";
-        rule2 += "( ?food ex:sugars ?sugar) ";
-        rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
-        rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
-        rule2 += "]";
-
-        String rules = rule1 + " " + rule2;
-
-        Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
-
-        reasoner.setDerivationLogging(true);
-        InfModel infModel = com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, baseModel);
-        return infModel;
-    }
-
+    // Creates the inference model for the Loan Eligibility model (second type)
     public static InfModel getLoanEligibilityInfModelSecondType() {
         Model baseModel = getLoanEligibilityBaseModelSecondType();
 
