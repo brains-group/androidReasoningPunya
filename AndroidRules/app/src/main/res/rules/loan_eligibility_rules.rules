@@ -1,22 +1,30 @@
-[rule1:
-    (?applicant schema:income ?monthlyIncome)
-    (?applicant schema:debt ?monthlyDebt)
-    quotient(?monthlyDebt, ?monthlyIncome, ?debtToIncomeRatio)
-    -> (?applicant ex:debtToIncomeRatio ?debtToIncomeRatio)
+[CalculateDTIRule:
+    (?applicant rdf:type foaf:Person)
+    (?applicant schema:monthlyDebt ?debt)
+    (?applicant schema:monthlyIncome ?income)
+    quotient(?debt, ?income, ?dti)
+    -> (?applicant ex:debtToIncomeRatio ?dti)
 ]
 
-[rule2:
-    (?applicant schema:creditScore ?creditScore)
-    (?applicant ex:debtToIncomeRatio ?debtToIncomeRatio)
-    lessThanOrEqual(?debtToIncomeRatio, '0.35'^^xsd:float)
-    greaterThanOrEqual(?creditScore, '620'^^xsd:integer)
+[EligibilityRule:
+    (?applicant rdf:type foaf:Person)
+    (?applicant ex:creditScore ?score)
+    (?applicant ex:debtToIncomeRatio ?dti)
+    greaterThan(?score, '600'^^xsd:int)
+    lessThan(?dti, '0.35'^^xsd:float)
     -> (?applicant ex:loanEligibility "Eligible")
 ]
 
-[rule3:
-    (?applicant ex:debtToIncomeRatio ?debtToIncomeRatio)
-    (?applicant schema:creditScore ?creditScore)
-    not(lessThanOrEqual(?debtToIncomeRatio, '0.35'^^xsd:float))
-    or(not(greaterThanOrEqual(?creditScore, '620'^^xsd:integer)))
-    -> (?applicant ex:loanEligibility "Not Eligible")
+[HighDTIRule:
+    (?applicant rdf:type foaf:Person)
+    (?applicant ex:debtToIncomeRatio ?dti)
+    greaterThanOrEqual(?dti, '0.35'^^xsd:float)
+    -> (?applicant ex:loanEligibility "Not Eligible - High DTI")
+]
+
+[LowCreditRule:
+    (?applicant rdf:type foaf:Person)
+    (?applicant ex:creditScore ?score)
+    lessThanOrEqual(?score, '600'^^xsd:int)
+    -> (?applicant ex:loanEligibility "Not Eligible - Low Credit")
 ]

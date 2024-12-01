@@ -142,36 +142,33 @@ public class ExplanationRunner {
         logSection("Running Trace-Based Explanation Test on Loan Eligibility");
 
         // Set up the Explainer
+        logSubSection("Base Model Contents");
         Explainer explainer = new Explainer();
-
-        // Set up the Base Model
-        logSubSection("Model Setup");
         explainer.Model(ModelFactory.getLoanEligibilityBaseModel());
-        logDetail("Base Model contents:");
-        StmtIterator baseStmts = explainer.Model().listStatements();
-        while(baseStmts.hasNext()) {
-            logDetail(baseStmts.next().toString());
-        }
-
-        // Set up the Rules
-        logSubSection("Rules Configuration");
         explainer.Rules(ModelFactory.getLoanEligibilityRules());
-        logDetail("Rules loaded:");
-        logDetail(ModelFactory.getLoanEligibilityRules());
+        
+        // Log the base model contents
+        explainer.Model().listStatements().forEachRemaining(
+            statement -> logDetail(statement.toString())
+        );
 
-        // Generate explanation
-        logSubSection("Generating Trace-Based Explanation");
-        TypeMapper tm = TypeMapper.getInstance();
-        RDFDatatype xsdDouble = tm.getTypeByName("http://www.w3.org/2001/XMLSchema#double");
-        Resource applicant = explainer.Model().getResource("http://xmlns.com/foaf/0.1/Person");
-        Property debtToIncomeRatioProperty = explainer.Model().getProperty("http://example.com/debtToIncomeRatio");
-        logDetail("Resources and properties configured");
+        // Log the rules
+        logSubSection("Rules Loaded");
+        logDetail(explainer.Rules());
+        
+        // Create the target statement parameters for Alex's loan ineligibility
+        Resource applicant1 = explainer.Model().getResource("http://example.com/applicant1");
+        Property loanEligibility = explainer.Model().getProperty("http://example.com/loanEligibility");
+        RDFNode eligibilityValue = ResourceFactory.createPlainLiteral("Not Eligible - DTI Too High");
 
+        // Generate and log the trace-based explanation
         String traceResponse = explainer.GetFullTraceBasedExplanation(
-            applicant,
-            debtToIncomeRatioProperty,
-            ResourceFactory.createTypedLiteral("0.30", xsdDouble));
-
+            applicant1,
+            loanEligibility,
+            ResourceFactory.createPlainLiteral("Not Eligible")
+        );
+        
+        logSubSection("Trace-Based Explanation");
         logDetail(traceResponse);
     }
 
@@ -275,44 +272,43 @@ public class ExplanationRunner {
 
         // Set up the Explainer
         Explainer explainer = new Explainer();
-
-        // Set up the Base Model
-        logSubSection("Model Setup");
         explainer.Model(ModelFactory.getLoanEligibilityBaseModel());
-        logDetail("Base Model contents:");
-        StmtIterator baseStmts = explainer.Model().listStatements();
-        while(baseStmts.hasNext()) {
-            logDetail(baseStmts.next().toString());
-        }
-
-        // Set up the Rules
-        logSubSection("Rules Configuration");
         explainer.Rules(ModelFactory.getLoanEligibilityRules());
-        logDetail("Rules loaded:");
-        logDetail(ModelFactory.getLoanEligibilityRules());
-
-        // Generate explanations
-        logSubSection("Generating Contextual Explanations");
-        TypeMapper tm = TypeMapper.getInstance();
-        RDFDatatype xsdDouble = tm.getTypeByName("http://www.w3.org/2001/XMLSchema#double");
-        Resource applicant = explainer.Model().getResource("http://xmlns.com/foaf/0.1/Person");
-        Property debtToIncomeRatioProperty = explainer.Model().getProperty("http://example.com/debtToIncomeRatio");
-        logDetail("Resources and properties configured");
-
-        String shallowExplanation = explainer.GetShallowContextualExplanation(
-                applicant,
-                debtToIncomeRatioProperty,
-                ResourceFactory.createTypedLiteral("0.30", xsdDouble)
+        
+        // Log the base model contents
+        logSubSection("Base Model Contents");
+        explainer.Model().listStatements().forEachRemaining(
+            statement -> logDetail(statement.toString())
         );
-        logDetail("Shallow Contextual Explanation:");
+
+        // Log the rules
+        logSubSection("Rules Loaded");
+        logDetail(explainer.Rules());
+        
+        // Create the target statement parameters for loan eligibility check
+        Resource applicant1 = explainer.Model().getResource("http://example.com/applicant1");
+        Property loanEligibility = explainer.Model().getProperty("http://example.com/loanEligibility");
+        RDFNode eligibilityValue = ResourceFactory.createPlainLiteral("Not Eligible - DTI Too High");
+
+        // Generate and log the contextual explanations
+        logSubSection("Generating Contextual Explanations");
+        
+        String shallowExplanation = explainer.GetShallowContextualExplanation(
+            applicant1,
+            loanEligibility,
+            ResourceFactory.createPlainLiteral("Not Eligible")
+        );
+        
+        String simpleExplanation = explainer.GetSimpleContextualExplanation(
+            applicant1,
+            loanEligibility,
+            ResourceFactory.createPlainLiteral("Not Eligible")
+        );
+        
+        logSubSection("Shallow Contextual Explanation");
         logDetail(shallowExplanation);
 
-        String simpleExplanation = explainer.GetSimpleContextualExplanation(
-                applicant,
-                debtToIncomeRatioProperty,
-                ResourceFactory.createTypedLiteral("0.30", xsdDouble)
-        );
-        logDetail("\nSimple Contextual Explanation:");
+        logSubSection("Simple Contextual Explanation");
         logDetail(simpleExplanation);
     }
 
@@ -374,46 +370,55 @@ public class ExplanationRunner {
         logSection("Running Contrastive Explanation Test on Loan Eligibility");
 
         // Set up the Explainer
-        logSubSection("Model Setup");
         Explainer explainer = new Explainer();
         explainer.Model(ModelFactory.getLoanEligibilityBaseModel());
         explainer.Rules(ModelFactory.getLoanEligibilityRules());
 
-        logDetail("Base Model contents:");
+        logSubSection("Base Model Contents");
         StmtIterator baseStmts = explainer.Model().listStatements();
         while(baseStmts.hasNext()) {
             logDetail(baseStmts.next().toString());
         }
 
-        logDetail("\nRules loaded:");
+        logSubSection("Rules Loaded");
         logDetail(explainer.Rules());
 
-        // Set up the Additional Model
-        logSubSection("Inference Model Setup");
+        // Set up the Inference Model
+        logSubSection("Inference Model Contents");
         InfModel infModel = ModelFactory.getLoanEligibilityInfModel();
-        logDetail("Inference Model contents:");
         StmtIterator infStmts = infModel.listStatements();
         while(infStmts.hasNext()) {
             logDetail(infStmts.next().toString());
         }
 
-        // Generate explanation
-        logSubSection("Generating Contrastive Explanation");
-        Resource applicant = infModel.getResource(ModelFactory.getPersonURI());
-        Property loanEligibility = infModel.getProperty("http://example.com/loanEligibility");
-        logDetail("Resources and properties configured");
+        // Set up the Additional Inference Model
+        logSubSection("Additional Inference Model Contents");
+        InfModel additionalInfModel = ModelFactory.getLoanEligibilityInfModelSecondType();
+        StmtIterator additionalInfStmts = additionalInfModel.listStatements();
+        while(additionalInfStmts.hasNext()) {
+            logDetail(additionalInfStmts.next().toString());
+        }
 
-        // List the statements about the applicant's loan eligibility
-        StmtIterator itr = infModel.listStatements(applicant, loanEligibility, (RDFNode) null);
+        // Create the target statement parameters for loan eligibility check
+        Resource applicant1 = explainer.Model().getResource("http://example.com/applicant1");
+        Property loanEligibility = explainer.Model().getProperty("http://example.com/loanEligibility");
+        RDFNode eligibilityValue = ResourceFactory.createPlainLiteral("Not Eligible - DTI Too High");
+
+        // Generate and log contrastive explanation
+        logSubSection("Generating Contrastive Explanation");
+
+        StmtIterator itr = infModel.listStatements(applicant1, loanEligibility, ResourceFactory.createPlainLiteral("Not Eligible"));
+        String contrastiveExplanation = "";
         while (itr.hasNext()) {
             Statement s = itr.next();
-            String contrastiveExplanation = explainer.GetFullContrastiveExplanation_B(
+            contrastiveExplanation += explainer.GetFullContrastiveExplanation_B(
                 s, 
                 ModelFactory.getLoanEligibilityBaseModelSecondType()
             );
-            logDetail("\nContrastive Explanation:");
-            logDetail(contrastiveExplanation);
         }
+
+        logSubSection("Contrastive Explanation");
+        logDetail(contrastiveExplanation);
     }
 
 
@@ -443,20 +448,18 @@ public class ExplanationRunner {
         explainer.Rules(ModelFactory.getLoanEligibilityRules());
         
         // Log initial state
-        logSubSection("Initial Model State");
-        logDetail("Base Model contents:");
+        logSubSection("Base Model Contents");
         StmtIterator baseStmts = explainer.Model().listStatements();
         while(baseStmts.hasNext()) {
             logDetail(baseStmts.next().toString());
         }
         
-        logDetail("\nRules:");
+        logSubSection("Rules Loaded");
         logDetail(explainer.Rules());
 
         // Set up the Inference Model
-        logSubSection("Inference Model Setup");
+        logSubSection("Inference Model Contents");
         InfModel infModel = ModelFactory.getLoanEligibilityInfModel();
-        logDetail("Inference Model contents:");
         StmtIterator infStmts = infModel.listStatements();
         while(infStmts.hasNext()) {
             logDetail(infStmts.next().toString());
@@ -464,17 +467,17 @@ public class ExplanationRunner {
 
         logSubSection("Generating Counterfactual Explanation");
 
-        // Properties
-        Resource alex = infModel.getResource("http://example.com/applicant1");
-        Property loanEligibility = infModel.getProperty("http://example.com/loanEligibility");
-        Property creditScore = infModel.getProperty("http://example.com/creditScore");
-        Property dti = infModel.getProperty("http://example.com/debtToIncomeRatio");
-        logDetail("Resources and properties configured");
-    
-        // Get explanation
-        String explanation = explainer.GetCounterfactualExplanation(alex, loanEligibility, creditScore, dti);
-        logSubSection("Counterfactual Explanation");
-        logDetail(explanation);
+        // Create the target statement parameters for loan eligibility check
+        Resource applicant1 = infModel.getResource("http://example.com/applicant1");
+        Property loanEligibility = explainer.Model().getProperty("http://example.com/loanEligibility");
+
+        StmtIterator itr = infModel.listStatements(applicant1, loanEligibility, ResourceFactory.createPlainLiteral("Not Eligible"));
+        while (itr.hasNext()) {
+            Statement s = itr.next();
+            String explanation = explainer.GetCounterfactualExplanation(s);
+            logSubSection("Counterfactual Explanation");
+            logDetail(explanation);
+        }
     }
 
 
@@ -529,23 +532,23 @@ public class ExplanationRunner {
         PrintUtil.registerPrefix("ex", ModelFactory.getGlobalURI());
 
         // Trace-Based Explanations
-        runExplanationTest("transitive", "trace-based");
-        runExplanationTest("food-recommendation", "trace-based");
+        // runExplanationTest("transitive", "trace-based");
+        // runExplanationTest("food-recommendation", "trace-based");
         runExplanationTest("loan-eligibility", "trace-based");
 
         // Contextual Explanations
-        runExplanationTest("transitive", "contextual");
-        runExplanationTest("food-recommendation", "contextual");
+        // runExplanationTest("transitive", "contextual");
+        // runExplanationTest("food-recommendation", "contextual");
         runExplanationTest("loan-eligibility", "contextual");
 
         // Contrastive Explanations
-        runExplanationTest("transitive", "contrastive");
-        runExplanationTest("food-recommendation", "contrastive");
+        // runExplanationTest("transitive", "contrastive");
+        // runExplanationTest("food-recommendation", "contrastive");
         runExplanationTest("loan-eligibility", "contrastive");
         
         // Counterfactual Explanations
-        runExplanationTest("transitive", "counterfactual");
-        runExplanationTest("food-recommendation", "counterfactual");
+        // runExplanationTest("transitive", "counterfactual");
+        // runExplanationTest("food-recommendation", "counterfactual");
         runExplanationTest("loan-eligibility", "counterfactual");     
     }
 }

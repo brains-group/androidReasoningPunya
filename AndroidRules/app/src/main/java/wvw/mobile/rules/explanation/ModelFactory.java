@@ -15,11 +15,13 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Literal;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.reasoner.Reasoner;
 import com.hp.hpl.jena.reasoner.rulesys.GenericRuleReasoner;
 import com.hp.hpl.jena.reasoner.rulesys.Rule;
 import com.hp.hpl.jena.util.PrintUtil;
 import com.hp.hpl.jena.vocabulary.RDF;
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 
 // Android Libraries
 import android.content.Context;
@@ -30,10 +32,10 @@ public class ModelFactory {
 
     // ============================================================================
     // Shared Resources and URIs
-    // ============================================================================
+    // ===========================================================================
 
     // Global URI
-    private static String ex  = "http://example.com/";
+    private static String ex = "http://example.com/";
     private static String schemaURI = "http://schema.org/";
     private static String rdfURI = RDF.getURI();
     private static String foaf = "http://xmlns.com/foaf/0.1/";
@@ -339,107 +341,79 @@ public class ModelFactory {
     // Creates the base model for the Loan Eligibility model
     public static Model getLoanEligibilityBaseModel() {
         Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
-    
-        // Common resources
+        
+        // Create resources for applicants
+        Resource applicant1 = model.createResource("http://example.com/applicant1");
+        Resource applicant2 = model.createResource("http://example.com/applicant2");
+        Resource applicant3 = model.createResource("http://example.com/applicant3");
         Resource personType = model.createResource("http://xmlns.com/foaf/0.1/Person");
-        Property nameProperty = model.createProperty("http://example.com/name");
-        Property creditScoreProperty = model.createProperty("http://example.com/creditScore");
-        Property debtToIncomeProperty = model.createProperty("http://example.com/debtToIncomeRatio");
-        Property loanEligibilityProperty = model.createProperty("http://example.com/loanEligibility");
         
-        // Create applicants
-        Resource applicant1 = model.createResource("http://example.com/applicant1", personType);
-        Resource applicant2 = model.createResource("http://example.com/applicant2", personType);
-        Resource applicant3 = model.createResource("http://example.com/applicant3", personType);
+        // Create properties
+        Property type = model.createProperty(rdfURI + "type");
+        Property name = model.createProperty(ex + "name");
+        Property creditScore = model.createProperty(ex + "creditScore");
+        Property monthlyDebt = model.createProperty(schemaURI + "monthlyDebt");
+        Property monthlyIncome = model.createProperty(schemaURI + "monthlyIncome");
         
-        // Applicant 1 - Not Eligible
-        applicant1.addProperty(nameProperty, "Alex")
-                .addLiteral(creditScoreProperty, 630)
-                .addLiteral(debtToIncomeProperty, 0.4)
-                .addLiteral(loanEligibilityProperty, "Not Eligible");
+        // Applicant 1 (Alex): High DTI but good credit
+        applicant1.addProperty(type, personType)
+                 .addProperty(name, "Alex")
+                 .addProperty(creditScore, model.createTypedLiteral(680, XSDDatatype.XSDint))
+                 .addProperty(monthlyDebt, model.createTypedLiteral(2000.0f, XSDDatatype.XSDfloat))
+                 .addProperty(monthlyIncome, model.createTypedLiteral(5000.0f, XSDDatatype.XSDfloat));
         
-        // Applicant 2 - Eligible
-        applicant2.addProperty(nameProperty, "Beth")
-                .addLiteral(creditScoreProperty, 620)
-                .addLiteral(debtToIncomeProperty, 0.2)
-                .addLiteral(loanEligibilityProperty, "Eligible");
+        // Applicant 2 (Beth): Good DTI but borderline credit
+        applicant2.addProperty(type, personType)
+                 .addProperty(name, "Beth")
+                 .addProperty(creditScore, model.createTypedLiteral(605, XSDDatatype.XSDint))
+                 .addProperty(monthlyDebt, model.createTypedLiteral(1500.0f, XSDDatatype.XSDfloat))
+                 .addProperty(monthlyIncome, model.createTypedLiteral(5000.0f, XSDDatatype.XSDfloat));
         
-        // Applicant 3 - Eligible
-        applicant3.addProperty(nameProperty, "Charlie")
-                .addLiteral(creditScoreProperty, 635)
-                .addLiteral(debtToIncomeProperty, 0.3)
-                .addLiteral(loanEligibilityProperty, "Eligible");
+        // Applicant 3 (Charlie): Good DTI and good credit
+        applicant3.addProperty(type, personType)
+                 .addProperty(name, "Charlie")
+                 .addProperty(creditScore, model.createTypedLiteral(700, XSDDatatype.XSDint))
+                 .addProperty(monthlyDebt, model.createTypedLiteral(1000.0f, XSDDatatype.XSDfloat))
+                 .addProperty(monthlyIncome, model.createTypedLiteral(5000.0f, XSDDatatype.XSDfloat));
+        
+        // Set prefixes for better printing
+        model.setNsPrefix("rdf", rdfURI);
+        model.setNsPrefix("schema", schemaURI);
+        model.setNsPrefix("ex", ex);
+        model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
+        model.setNsPrefix("xsd", "http://www.w3.org/2001/XMLSchema#");
         
         return model;
     }
 
-    // // Creates the rules for the Loan Eligibility model
-    // public static String getLoanEligibilityRules() {
-    //     String rules = "[rule1: "
-    //     + "(?applicant http://example.com/income ?incomeNode) "
-    //     + "(?incomeNode http://schema.org/value ?monthlyIncome) "
-    //     + "(?applicant http://example.com/debt ?debtNode) "
-    //     + "(?debtNode http://schema.org/value ?monthlyDebt) "
-    //     + "product(?monthlyDebt, '1.0'^^xsd:float, ?debtFloat) "
-    //     + "product(?monthlyIncome, '1.0'^^xsd:float, ?incomeFloat) "
-    //     + "quotient(?debtFloat, ?incomeFloat, ?ratio) "
-    //     + "-> "
-    //     + "(?applicant http://example.com/debtToIncomeRatio ?ratio)"
-    //     + "]"
-    //     + "\n"
-    //     + "[rule2: "
-    //     + "(?applicant http://example.com/creditScore ?scoreNode) "
-    //     + "(?scoreNode http://schema.org/value ?creditScore) "
-    //     + "(?applicant http://example.com/debtToIncomeRatio ?ratio) "
-    //     + "lessThan(?ratio, '0.35'^^xsd:float) "
-    //     + "greaterThan(?creditScore, '620'^^xsd:int) "
-    //     + "-> "
-    //     + "(?applicant http://example.com/loanEligibility \"Eligible\")"
-    //     + "]"
-    //     + "\n"
-    //     + "[rule3: "
-    //     + "(?applicant http://example.com/debtToIncomeRatio ?ratio) "
-    //     + "(?applicant http://example.com/creditScore ?scoreNode) "
-    //     + "(?scoreNode http://schema.org/value ?creditScore) "
-    //     + "ge(?ratio, '0.35'^^xsd:float) "
-    //     + "-> "
-    //     + "(?applicant http://example.com/loanEligibility \"Not Eligible\")"
-    //     + "]";
-
-    //     return rules;
-    // }
-
     // Creates the rules for the Loan Eligibility model
     public static String getLoanEligibilityRules() {
-        String rules = "[rule1: "
-            + "(?applicant rdf:type http://xmlns.com/foaf/0.1/Person) "
-            + "(?applicant http://example.com/creditScore ?score) "
-            + "(?applicant http://example.com/debtToIncomeRatio ?dti) "
-            + "lessThan(?dti, '0.35'^^xsd:float) "
-            + "greaterThan(?score, '600'^^xsd:int) "
-            + "-> "
-            + "(?applicant http://example.com/loanEligibility \"Eligible\")"
-            + "]"
+        return "[DTIRule: "
+            + "(?applicant rdf:type foaf:Person) "
+            + "(?applicant schema:monthlyDebt ?debt) "
+            + "(?applicant schema:monthlyIncome ?income) "
+            + "quotient(?debt, ?income, ?dti) "
+            + "-> (?applicant ex:dtiRatio ?dti)]"
             + "\n"
-            + "[rule2: "
-            + "(?applicant rdf:type http://xmlns.com/foaf/0.1/Person) "
-            + "(?applicant http://example.com/creditScore ?score) "
-            + "(?applicant http://example.com/debtToIncomeRatio ?dti) "
-            + "ge(?dti, '0.35'^^xsd:float) "
-            + "-> "
-            + "(?applicant http://example.com/loanEligibility \"Not Eligible\")"
-            + "]"
+            + "[EligibilityRule: "
+            + "(?applicant rdf:type foaf:Person) "
+            + "(?applicant ex:dtiRatio ?dti) "
+            + "(?applicant ex:creditScore ?score) "
+            + "lessThan(?dti, '0.35'^^xsd:double) "
+            + "greaterThan(?score, '620'^^xsd:int) "
+            + "-> (?applicant ex:loanEligibility 'Eligible')]"
             + "\n"
-            + "[rule3: "
-            + "(?applicant rdf:type http://xmlns.com/foaf/0.1/Person) "
-            + "(?applicant http://example.com/creditScore ?score) "
-            + "(?applicant http://example.com/debtToIncomeRatio ?dti) "
-            + "lessThan(?score, '600'^^xsd:int) "
-            + "-> "
-            + "(?applicant http://example.com/loanEligibility \"Not Eligible\")"
-            + "]";
-    
-        return rules;
+            + "[NotEligibleDTIRule: "
+            + "(?applicant rdf:type foaf:Person) "
+            + "(?applicant ex:dtiRatio ?dti) "
+            + "greaterThan(?dti, '0.349999'^^xsd:double) "
+            + "-> (?applicant ex:loanEligibility 'Not Eligible')]"
+            + "\n"
+            + "[NotEligibleCreditRule: "
+            + "(?applicant rdf:type foaf:Person) "
+            + "(?applicant ex:creditScore ?score) "
+            + "lessThan(?score, '621'^^xsd:int) "
+            + "-> (?applicant ex:loanEligibility 'Not Eligible')]";
     }
 
     // Creates the inference model for the Loan Eligibility model
@@ -465,49 +439,39 @@ public class ModelFactory {
 
     // Creates the base model for the Loan Eligibility model (second type)
     public static Model getLoanEligibilityBaseModelSecondType() {
-        // Creating the model for loan eligibility (second type) with Person, Income, Debt, CreditScore
         Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
-
-        // Create the resources
-        Resource applicant = model.createResource(personURI);
-        Resource income = model.createResource(incomeURI);
-        Resource debt = model.createResource(debtURI);
-        Resource creditScore = model.createResource(creditScoreURI);
-
-        // Create literals
-        Literal monthlyIncome = model.createTypedLiteral(new BigDecimal(4000)); // Monthly income in dollars for second type
-        Literal monthlyDebt = model.createTypedLiteral(new BigDecimal(1600)); // Monthly debt in dollars for second type
-        Literal creditScoreValue = model.createTypedLiteral(new Integer(650)); // Credit score as integer for second type
-        String dollars = "USD"; // Unit of currency (dollars)
-        String scoreUnit = "integer"; // Unit for credit score
-        String applicantName = "Jordan"; // Name "Jordan" for the second type
-
-        // Add statements
-        applicant.addProperty(model.createProperty(rdfURI + "type"), applicant);
-        applicant.addProperty(model.createProperty(nameURI), applicantName); // Add name property for "Jordan"
-        income.addLiteral(model.createProperty(valueURI), monthlyIncome);
-        income.addProperty(model.createProperty(unitURI), dollars);
-        debt.addLiteral(model.createProperty(valueURI), monthlyDebt);
-        debt.addProperty(model.createProperty(unitURI), dollars);
-        creditScore.addLiteral(model.createProperty(valueURI), creditScoreValue);
-        creditScore.addProperty(model.createProperty(unitURI), scoreUnit);
-
-        // Link the applicant to income, debt, and credit score
-        applicant.addProperty(model.createProperty(incomeURI), income);
-        applicant.addProperty(model.createProperty(debtURI), debt);
-        applicant.addProperty(model.createProperty(creditScoreURI), creditScore);
-
-        // Set prefix for better printing
+        
+        // Create resources for applicant (using Charlie's data)
+        Resource applicant = model.createResource("http://example.com/applicant1");
+        Resource personType = model.createResource("http://xmlns.com/foaf/0.1/Person");
+        
+        // Create properties
+        Property type = model.createProperty(rdfURI + "type");
+        Property name = model.createProperty(ex + "name");
+        Property creditScore = model.createProperty(ex + "creditScore");
+        Property monthlyDebt = model.createProperty(schemaURI + "monthlyDebt");
+        Property monthlyIncome = model.createProperty(schemaURI + "monthlyIncome");
+        
+        // Add Charlie's properties to applicant4
+        applicant.addProperty(type, personType)
+                .addProperty(name, "Trent")
+                .addProperty(creditScore, model.createTypedLiteral(700, XSDDatatype.XSDint))
+                .addProperty(monthlyDebt, model.createTypedLiteral(1000.0f, XSDDatatype.XSDfloat))
+                .addProperty(monthlyIncome, model.createTypedLiteral(5000.0f, XSDDatatype.XSDfloat));
+        
+        // Set prefixes for better printing
+        model.setNsPrefix("rdf", rdfURI);
         model.setNsPrefix("schema", schemaURI);
         model.setNsPrefix("ex", ex);
-        model.setNsPrefix("rdf", rdfURI);
-
+        model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
+        model.setNsPrefix("xsd", "http://www.w3.org/2001/XMLSchema#");
+        
         return model;
     }
 
-
     // Creates the inference model for the Loan Eligibility model (second type)
     public static InfModel getLoanEligibilityInfModelSecondType() {
+        // Get the base model that defines the applicant's data
         Model baseModel = getLoanEligibilityBaseModelSecondType();
 
         // Register prefixes for easier output
@@ -515,32 +479,8 @@ public class ModelFactory {
         PrintUtil.registerPrefix("rdf", rdfURI);
         PrintUtil.registerPrefix("ex", ex);
 
-        // Define the loan eligibility rules for the second type
-        String rule1 = "[rule1: ";
-        rule1 += "( ?applicant schema:income ?monthlyIncome ) ";
-        rule1 += "( ?applicant schema:debt ?monthlyDebt ) ";
-        rule1 += "quotient(?monthlyDebt, ?monthlyIncome, ?debtToIncomeRatio) ";
-        rule1 += "-> (?applicant ex:debtToIncomeRatio ?debtToIncomeRatio) ";
-        rule1 += "]";
-
-        String rule2 = "[rule2: ";
-        rule2 += "( ?applicant schema:creditScore ?creditScore ) ";
-        rule2 += "( ?applicant ex:debtToIncomeRatio ?debtToIncomeRatio ) ";
-        rule2 += "lessThanOrEqual(?debtToIncomeRatio, '0.35'^^http://www.w3.org/2001/XMLSchema#float) ";
-        rule2 += "greaterThanOrEqual(?creditScore, '620'^^http://www.w3.org/2001/XMLSchema#integer) ";
-        rule2 += "-> (?applicant ex:loanEligibility \"Eligible\")";
-        rule2 += "]";
-
-        String rule3 = "[rule3: ";
-        rule3 += "( ?applicant ex:debtToIncomeRatio ?debtToIncomeRatio ) ";
-        rule3 += "( ?applicant schema:creditScore ?creditScore ) ";
-        rule3 += "not(lessThanOrEqual(?debtToIncomeRatio, '0.35'^^http://www.w3.org/2001/XMLSchema#float)) ";
-        rule3 += "or(not(greaterThanOrEqual(?creditScore, '620'^^http://www.w3.org/2001/XMLSchema#integer))) ";
-        rule3 += "-> (?applicant ex:loanEligibility \"Not Eligible\")";
-        rule3 += "]";
-
-        // Combine the rules
-        String rules = rule1 + " " + rule2 + " " + rule3;
+        // Use the same rules as the original loan eligibility model
+        String rules = getLoanEligibilityRules();
 
         // Create a reasoner using the rules and apply it to the base model
         Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
