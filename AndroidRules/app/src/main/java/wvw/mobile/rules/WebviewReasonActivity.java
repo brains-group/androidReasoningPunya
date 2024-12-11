@@ -1,28 +1,32 @@
 package wvw.mobile.rules;
 
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
 import android.webkit.WebView;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.hp.hpl.jena.rdf.model.Statement;
 import wvw.mobile.rules.explanation.ExplanationRunner;
+import wvw.mobile.rules.explanation.ModelFactory;
 
 public class WebviewReasonActivity extends AppCompatActivity {
-    private WebView webView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_webview_reason);
 
-        webView = findViewById(R.id.webView);
+        WebView webview = findViewById(R.id.webview);
         
-        // Instead of calling run(), let's get a specific explanation
+        // Get a default statement from the model
+        Statement defaultStatement = ModelFactory.getFoodRecommendationInfModel()
+            .listStatements().nextStatement();
+
         String explanation = ExplanationRunner.getExplanation(
-            "loan-eligibility", 
-            "trace-based"  // or whatever default explanation type you want
+            "food-recommendation",
+            "trace-based",
+            defaultStatement  // Add the required Statement parameter
         );
-        
-        // Display the explanation in the WebView
-        String htmlContent = "<html><body><pre>" + explanation + "</pre></body></html>";
-        webView.loadData(htmlContent, "text/html", "UTF-8");
+
+        webview.loadData(explanation, "text/html", "UTF-8");
     }
 }

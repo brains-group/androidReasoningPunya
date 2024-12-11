@@ -47,27 +47,115 @@ public class ExplanationRunner {
         output = new StringBuilder();
     }
 
-    public static String getExplanation(String model, String explanationType) {
+    public static String getExplanation(String model, String explanationType, Statement selectedTriple) {
         clearOutput();
         
-        if (model.equals("loan-eligibility")) {
-            switch (explanationType) {
-                case "trace-based":
-                    return runLoanEligibilityExplanation("trace-based");
-                case "contextual":
-                    return runLoanEligibilityExplanation("contextual");
-                case "contrastive":
-                    return runLoanEligibilityExplanation("contrastive");
-                case "counterfactual":
-                    return runLoanEligibilityExplanation("counterfactual");
-                default:
-                    return "Invalid explanation type selected";
-            }
+        switch (model) {
+            case "loan-eligibility":
+                return runLoanEligibilityExplanation(explanationType, selectedTriple);
+            case "food-recommendation":
+                return runFoodRecommendationExplanation(explanationType, selectedTriple);
+            case "transitive":
+                return runTransitiveExplanation(explanationType, selectedTriple);
+            default:
+                return "Invalid model selected";
         }
-        return "Invalid model selected";
     }
 
-    private static String runLoanEligibilityExplanation(String type) {
+    private static String runFoodRecommendationExplanation(String type, Statement selectedTriple) {
+        try {
+            // Register prefixes first
+            com.hp.hpl.jena.util.PrintUtil.registerPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+            com.hp.hpl.jena.util.PrintUtil.registerPrefix("schema", "http://schema.org/");
+            com.hp.hpl.jena.util.PrintUtil.registerPrefix("ex", "http://example.com/");
+            com.hp.hpl.jena.util.PrintUtil.registerPrefix("foaf", "http://xmlns.com/foaf/0.1/");
+            com.hp.hpl.jena.util.PrintUtil.registerPrefix("xsd", "http://www.w3.org/2001/XMLSchema#");
+
+            Explainer explainer = new Explainer();
+            Model baseModel = ModelFactory.getFoodRecommendationBaseModel();
+            if (baseModel == null) {
+                return "Error: Food recommendation base model is null";
+            }
+            explainer.Model(baseModel);
+            
+            String rules = ModelFactory.getFoodRecommendationRules();
+            if (rules == null || rules.isEmpty()) {
+                return "Error: Food recommendation rules are empty";
+            }
+            explainer.Rules(rules);
+            
+            switch (type) {
+                case "trace-based":
+                    return explainer.GetFullTraceBasedExplanation(
+                        selectedTriple.getSubject(),
+                        selectedTriple.getPredicate(),
+                        selectedTriple.getObject()
+                    );
+                case "contextual":
+                    return explainer.GetShallowContextualExplanation(
+                        selectedTriple.getSubject(),
+                        selectedTriple.getPredicate(),
+                        selectedTriple.getObject()
+                    );
+                case "contrastive":
+                    return explainer.GetFullContrastiveExplanation_B(
+                        selectedTriple,
+                        ModelFactory.getFoodRecommendationBaseModelBanana()
+                    );
+                case "counterfactual":
+                    return explainer.GetCounterfactualExplanation(selectedTriple);
+                default:
+                    return "Invalid explanation type";
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error generating explanation", e);
+            return "Error generating explanation: " + e.getMessage() + "\n" + e.getStackTrace()[0].toString();
+        }
+    }
+
+    private static String runTransitiveExplanation(String type, Statement selectedTriple) {
+        try {
+            // Register prefixes first
+            com.hp.hpl.jena.util.PrintUtil.registerPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+            com.hp.hpl.jena.util.PrintUtil.registerPrefix("schema", "http://schema.org/");
+            com.hp.hpl.jena.util.PrintUtil.registerPrefix("ex", "http://example.com/");
+            com.hp.hpl.jena.util.PrintUtil.registerPrefix("xsd", "http://www.w3.org/2001/XMLSchema#");
+
+            Explainer explainer = new Explainer();
+            Model baseModel = ModelFactory.getTransitiveBaseModel();
+            if (baseModel == null) {
+                return "Error: Transitive base model is null";
+            }
+            explainer.Model(baseModel);
+            
+            String rules = ModelFactory.getTransitiveRules();
+            if (rules == null || rules.isEmpty()) {
+                return "Error: Transitive rules are empty";
+            }
+            explainer.Rules(rules);
+
+            switch (type) {
+                case "trace-based":
+                    return explainer.GetFullTraceBasedExplanation(
+                        selectedTriple.getSubject(),
+                        selectedTriple.getPredicate(),
+                        selectedTriple.getObject()
+                    );
+                case "contextual":
+                    return explainer.GetShallowContextualExplanation(
+                        selectedTriple.getSubject(),
+                        selectedTriple.getPredicate(),
+                        selectedTriple.getObject()
+                    );
+                default:
+                    return "Only trace-based and contextual explanations are supported for the transitive model";
+            }
+        } catch (Exception e) {
+            return "Error generating explanation: " + e.getMessage() + "\n" + e.getStackTrace()[0].toString();
+        }
+    }
+
+    private static String runLoanEligibilityExplanation(String type, Statement selectedTriple) {
         try {
             // Register prefixes first
             com.hp.hpl.jena.util.PrintUtil.registerPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
@@ -80,38 +168,26 @@ public class ExplanationRunner {
             explainer.Model(ModelFactory.getLoanEligibilityBaseModel());
             explainer.Rules(ModelFactory.getLoanEligibilityRules());
             
-            Resource applicant1 = explainer.Model().getResource("http://example.com/applicant1");
-            Property loanEligibility = explainer.Model().getProperty("http://example.com/loanEligibility");
-            
-            InfModel infModel = ModelFactory.getLoanEligibilityInfModel();
-            StmtIterator itr = infModel.listStatements(applicant1, loanEligibility, 
-                ResourceFactory.createPlainLiteral("Not Eligible"));
-            
-            if (!itr.hasNext()) {
-                return "No eligible statements found";
-            }
-            
-            Statement s = itr.next();
             switch (type) {
                 case "trace-based":
                     return explainer.GetFullTraceBasedExplanation(
-                        applicant1,
-                        loanEligibility,
-                        ResourceFactory.createPlainLiteral("Not Eligible")
+                        selectedTriple.getSubject(),
+                        selectedTriple.getPredicate(),
+                        selectedTriple.getObject()
                     );
                 case "contextual":
                     return explainer.GetShallowContextualExplanation(
-                        applicant1,
-                        loanEligibility,
-                        ResourceFactory.createPlainLiteral("Not Eligible")
+                        selectedTriple.getSubject(),
+                        selectedTriple.getPredicate(),
+                        selectedTriple.getObject()
                     );
                 case "contrastive":
                     return explainer.GetFullContrastiveExplanation_B(
-                        s,
+                        selectedTriple,
                         ModelFactory.getLoanEligibilityBaseModelSecondType()
                     );
                 case "counterfactual":
-                    return explainer.GetCounterfactualExplanation(s);
+                    return explainer.GetCounterfactualExplanation(selectedTriple);
                 default:
                     return "Invalid explanation type";
             }

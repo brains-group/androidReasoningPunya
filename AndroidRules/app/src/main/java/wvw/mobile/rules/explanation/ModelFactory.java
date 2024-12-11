@@ -121,6 +121,12 @@ public class ModelFactory {
         return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, model);
     }
 
+    // Add this method to the existing Transitive Model Methods section
+    public static String getTransitiveRules() {
+        // Use the same rule format as in getTransitiveInfModel
+        return "[transitiveRule: (?a ex:equals ?b) (?b ex:equals ?c) -> (?a ex:equals ?c)]";
+    }
+
 
 
     // ============================================================================
@@ -165,48 +171,8 @@ public class ModelFactory {
         return model;
     }
 
-    // Creates the rules for the Food Recommendation model
-    public static String getFoodRecommendationRules() {
-        String rule1 = "[rule1: ";
-        rule1 += "( ?var schema:weight ?weight ) ";
-        rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
-        rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
-        rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
-        rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
-        rule1 += "-> (?var ex:sugars ?sugars)";
-        rule1 += "]";
-        
-        String rule2 = "[rule2: ";
-        rule2 += "( ?user rdf:type foaf:Person) ";
-        rule2 += "( ?user ex:ate ?food) ";
-        rule2 += "( ?food ex:sugars ?sugar) ";
-        rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
-        rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
-        rule2 += "]";
-
-        String rule3 = "[rule3: ";
-        rule3 += "( ?user rdf:type foaf:Person ) ";
-        rule3 += "( ?user ex:totalSugars ?currentTotal ) ";
-        rule3 += "( ?food ex:sugars ?foodSugars ) ";
-        rule3 += "sum(?currentTotal, ?foodSugars, ?potentialTotal) ";
-        rule3 += "lessThan(?potentialTotal, '50.0'^^http://www.w3.org/2001/XMLSchema#float) ";
-        rule3 += "-> ( ?user ex:allowedToEat ?food 'true'^^http://www.w3.org/2001/XMLSchema#boolean ) ";
-        rule3 += "]";
-
-        String rule4 = "[rule4: ";
-        rule4 += "( ?user rdf:type foaf:Person ) ";
-        rule4 += "( ?user ex:totalSugars ?currentTotal ) ";
-        rule4 += "( ?food ex:sugars ?foodSugars ) ";
-        rule4 += "sum(?currentTotal, ?foodSugars, ?potentialTotal) ";
-        rule4 += "greaterThan(?potentialTotal, '50.0'^^http://www.w3.org/2001/XMLSchema#float) ";
-        rule4 += "-> ( ?user ex:allowedToEat ?food 'false'^^http://www.w3.org/2001/XMLSchema#boolean ) ";
-        rule4 += "]";
-
-        return rule1 + " " + rule2 + " " + rule3 + " " + rule4;
-    }
-
     // Creates the rules for the Food Recommendation model with prefixes
-    public static String getFoodRecommendationRulesPrefix() {
+    public static String getFoodRecommendationRules() {
         // Define prefixes as constants to avoid errors
         String schemaPrefix = "http://schema.org/";
         // String usdaPrefix = "http://example.com/usda#";
@@ -215,7 +181,7 @@ public class ModelFactory {
         String rdfPrefix = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
         String foafPrefix = "http://xmlns.com/foaf/0.1/";
 
-        String rule1 = "[rule1: ";
+        String rule1 = "[CalculateSugarContent: ";
         rule1 += "( ?var " + schemaPrefix + "weight ?weight ) ";
         rule1 += "( ?var " + schemaPrefix + "variableMeasured ?foodstuff ) ";
         rule1 += "( ?foodstuff " + usdaPrefix + "sugar ?sugarsPer100g ) ";
@@ -224,7 +190,7 @@ public class ModelFactory {
         rule1 += "-> (?var " + exPrefix + "sugars ?sugars)";
         rule1 += "]";
 
-        String rule2 = "[rule2: ";
+        String rule2 = "[TrackTotalSugars: ";
         rule2 += "( ?user " + rdfPrefix + "type " + foafPrefix + "Person) ";
         rule2 += "( ?user " + exPrefix + "ate ?food) ";
         rule2 += "( ?food " + exPrefix + "sugars ?sugar) ";
@@ -232,13 +198,13 @@ public class ModelFactory {
         rule2 += "-> ( ?user " + exPrefix + "totalSugars ?totalSugars ) ";
         rule2 += "]";
 
-        String rule3 = "[rule3: ";
+        String rule3 = "[AllowFoodUnderLimit: ";
         rule3 += "( ?observation " + exPrefix + "sugars ?sugars ) ";
         rule3 += "lessThan(?sugars, '25.0'^^http://www.w3.org/2001/XMLSchema#float) ";
         rule3 += "-> ( ?observation " + exPrefix + "allowedToEat 'true'^^http://www.w3.org/2001/XMLSchema#boolean ) ";
         rule3 += "]";
 
-        String rule4 = "[rule4: ";
+        String rule4 = "[RestrictFoodOverLimit: ";
         rule4 += "( ?observation " + exPrefix + "sugars ?sugars ) ";
         rule4 += "greaterThan(?sugars, '25.0'^^http://www.w3.org/2001/XMLSchema#float) ";
         rule4 += "-> ( ?observation " + exPrefix + "allowedToEat 'false'^^http://www.w3.org/2001/XMLSchema#boolean ) ";
@@ -258,7 +224,7 @@ public class ModelFactory {
         PrintUtil.registerPrefix("ex", ex);
         PrintUtil.registerPrefix("foaf", foaf);
 
-        String rules = getFoodRecommendationRulesPrefix();
+        String rules = getFoodRecommendationRules();
 
         Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
 
@@ -306,24 +272,7 @@ public class ModelFactory {
         PrintUtil.registerPrefix("ex", ex);
         PrintUtil.registerPrefix("foaf", foaf);
 
-        // https://jena.apache.org/documentation/inference/#RULEsyntax for specifics on rule syntax
-        String rule1 = "[rule1: ";
-        rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
-        rule1 += "( ?foodstuff schema:weight ?weight ) ";
-        rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
-        rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
-        rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
-        rule1 += "-> (?var ex:sugars ?sugars)";
-        rule1 += "]";
-        String rule2 = "[rule2: ";
-        rule2 += "( ?user rdf:type foaf:Person) ";
-        rule2 += "( ?user ex:ate ?food) ";
-        rule2 += "( ?food ex:sugars ?sugar) ";
-        rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
-        rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
-        rule2 += "]";
-
-        String rules = rule1 + " " + rule2;
+        String rules = getFoodRecommendationRules();
 
         Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
 
@@ -418,13 +367,15 @@ public class ModelFactory {
 
     // Creates the inference model for the Loan Eligibility model
     public static InfModel getLoanEligibilityInfModel() {
-        // Get the base model that defines the applicant's data (income, debt, credit score)
-        Model baseModel = getLoanEligibilityBaseModel();
-
-        // Register prefixes for easier output
+        // Register prefixes first - before creating the reasoner
         PrintUtil.registerPrefix("schema", schemaURI);
         PrintUtil.registerPrefix("rdf", rdfURI);
         PrintUtil.registerPrefix("ex", ex);
+        PrintUtil.registerPrefix("foaf", "http://xmlns.com/foaf/0.1/");
+        PrintUtil.registerPrefix("xsd", "http://www.w3.org/2001/XMLSchema#");
+
+        // Get the base model that defines the applicant's data
+        Model baseModel = getLoanEligibilityBaseModel();
 
         // Combine the rules
         String rules = getLoanEligibilityRules();
